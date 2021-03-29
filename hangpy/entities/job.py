@@ -11,6 +11,7 @@ class Job():
         self.status = JobStatus.ENQUEUED
         self.enqueued_datetime = datetime.datetime.now().isoformat()
         self.start_datetime = None
-        self.end_datetime = None        
-        if (parameters is None):
-            self.parameters = []
+        self.end_datetime = None
+        self.parameters = []
+        if (parameters is not None):
+            self.parameters.extend(parameters)
