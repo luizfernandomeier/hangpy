@@ -13,7 +13,7 @@ class TestJobActivityBase(unittest.TestCase):
     def test_get_job_object(self):
         job_activity = FakeJob()
         job = job_activity.get_job_object()
-        self.assertEqual(job.module_name, 'test_activity_job_base')
+        self.assertTrue(job.module_name.endswith('test_activity_job_base'))
         self.assertEqual(job.class_name, 'FakeJob')
 
 class FakeJob(JobActivityBase):
