@@ -1,4 +1,5 @@
 import hangpy
+import redis
 
 server_configuration = hangpy.ServerConfigurationDto()
 server = hangpy.Server()
@@ -8,11 +9,10 @@ print(f'Server id: {server.id}')
 print(f'Started: {server.start_datetime}')
 print(f'Interval: {server_configuration.cycle_interval_milliseconds} ms')
 
-redis_host = '172.17.0.1'
-redis_port = 6379
+redis_client = redis.Redis(host='172.17.0.1', port=6379, password=None)
 
-job_repository = hangpy.RedisJobRepository(redis_host, redis_port)
-server_repository = hangpy.RedisServerRepository(redis_host, redis_port)
+job_repository = hangpy.RedisJobRepository(redis_client)
+server_repository = hangpy.RedisServerRepository(redis_client)
 
 server_repository.add_server(server)
 
