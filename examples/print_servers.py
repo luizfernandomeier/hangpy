@@ -1,6 +1,9 @@
+import redis
 from hangpy.repositories.redis_server_repository import RedisServerRepository
 
-server_repository = RedisServerRepository('172.17.0.1', 6379)
+redis_client = redis.Redis(host='172.17.0.1', port=6379, password=None)
+
+server_repository = RedisServerRepository(redis_client)
 
 for server in server_repository.get_servers():
     print(f'\nid: {server.id}')

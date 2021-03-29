@@ -1,6 +1,9 @@
+import redis
 from hangpy.repositories.redis_job_repository import RedisJobRepository
 
-job_repository = RedisJobRepository('172.17.0.1', 6379)
+redis_client = redis.Redis(host='172.17.0.1', port=6379, password=None)
+
+job_repository = RedisJobRepository(redis_client)
 
 for job in job_repository.get_jobs():
     print(f'\nid: {job.id}')
