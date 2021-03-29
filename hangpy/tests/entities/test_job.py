@@ -26,5 +26,26 @@ class TestJob(unittest.TestCase):
         self.assertEqual(job.end_datetime, None)
         self.assertListEqual(job.parameters, [])
 
+        with self.assertRaises(ValueError):
+            job = Job('', 'class2')
+
+        with self.assertRaises(ValueError):
+            job = Job(123, 'class2')
+
+        with self.assertRaises(ValueError):
+            job = Job('module1', '')
+
+        with self.assertRaises(ValueError):
+            job = Job('module1', 123)
+
+        with self.assertRaises(ValueError):
+            job = Job('module1', 'class2', 123)
+
+        with self.assertRaises(ValueError):
+            job = Job('module1', 'class2', 'text')
+
+        with self.assertRaises(ValueError):
+            job = Job('module1', 'class2', range(10))
+
 if (__name__ == "__main__"):
     unittest.main()
