@@ -1,0 +1,5 @@
+[run]
+omit=.vscode/*,examples/*,hangpy-env/*,hangpy.egg-info/*,scripts/*,*__init__.py*
+
+[report]
+omit=hangpy/tests/*
