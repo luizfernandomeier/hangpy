@@ -9,7 +9,7 @@ print(f'Server id: {server.id}')
 print(f'Started: {server.start_datetime}')
 print(f'Interval: {server_configuration.cycle_interval_milliseconds} ms')
 
-redis_client = redis.Redis(host='172.17.0.1', port=6379, password=None)
+redis_client = redis.StrictRedis(host='172.17.0.1', port=6379, password=None)
 
 job_repository = hangpy.RedisJobRepository(redis_client)
 server_repository = hangpy.RedisServerRepository(redis_client)
