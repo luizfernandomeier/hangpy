@@ -1,7 +1,7 @@
 import redis
 from hangpy.repositories.redis_job_repository import RedisJobRepository
 
-redis_client = redis.Redis(host='172.17.0.1', port=6379, password=None)
+redis_client = redis.StrictRedis(host='172.17.0.1', port=6379, password=None)
 
 job_repository = RedisJobRepository(redis_client)
 
