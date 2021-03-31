@@ -5,7 +5,6 @@ import unittest
 from freezegun import freeze_time
 from hangpy.entities.server import Server
 from hangpy.repositories.redis_server_repository import RedisServerRepository
-#from hangpy.services import JobActivityBase
 
 class TestRedisServerRepository(unittest.TestCase):
 

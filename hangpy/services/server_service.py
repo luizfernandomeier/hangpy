@@ -15,21 +15,30 @@ class ServerService(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
-        while (not self.stop_signal):
+        while (self.run_enabled()):
             self.run_cycle()
-            time.sleep(self.server_configuration.cycle_interval_milliseconds / 1000)
+            self.sleep_cycle()
         self.set_server_stop_state()
+
+    def sleep_cycle(self):
+        time.sleep(self.server_configuration.cycle_interval_milliseconds / 1000)
+    
+    def run_enabled(self):
+        return not self.stop_signal
     
     def run_cycle(self):
         try:
             self.set_server_cycle_state()
-            jobs_deserialized = self.job_repository.get_jobs_by_status(JobStatus.ENQUEUED)
-            for job in jobs_deserialized:
-                if (self.stop_signal):
+            jobs = self.get_enqueued_jobs()
+            for job in jobs:
+                if (not self.run_enabled()):
                     break
                 self.run_job(job)
         except Exception as err:
             self.log(f'An error ocurred during the job processing cycle: {err}')
+
+    def get_enqueued_jobs(self):
+        return self.job_repository.get_jobs_by_status(JobStatus.ENQUEUED)
 
     def run_job(self, job):
         self.set_job_start_state(job)
@@ -65,5 +74,6 @@ class ServerService(threading.Thread):
         job.end_datetime = datetime.datetime.now().isoformat()
         self.job_repository.update_job(job)
     
+    # TODO: Implement custom logger
     def log(self, message):
         print(message)
