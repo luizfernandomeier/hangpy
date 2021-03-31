@@ -56,7 +56,8 @@ class TestRedisJobRepository(unittest.TestCase):
         self.assertEqual(actual_job.status, JobStatus.ERROR)
 
 class FakeJob(JobActivityBase):
-    pass
+    def action(self):
+        pass
 
 if (__name__ == '__main__'):
     unittest.main()
