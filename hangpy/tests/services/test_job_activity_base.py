@@ -17,23 +17,31 @@ def set_job_end_datetime_side_effect(*args):
     global set_job_end_datetime_run_count
     set_job_end_datetime_run_count += 1
 
+def set_started_to_run_side_effect(*args):
+    global set_started_to_run_run_count
+    set_started_to_run_run_count += 1
+
 class TestJobActivityBase(TestCase):
 
     def setUp(self):
         global set_job_status_run_count
         global set_job_error_run_count
         global set_job_end_datetime_run_count
+        global set_started_to_run_run_count
         set_job_status_run_count = 0
         set_job_error_run_count = 0
         set_job_end_datetime_run_count = 0
+        set_started_to_run_run_count = 0
 
     def tearDownClass():
         global set_job_status_run_count
         global set_job_error_run_count
         global set_job_end_datetime_run_count
+        global set_started_to_run_run_count
         del(set_job_status_run_count)
         del(set_job_error_run_count)
         del(set_job_end_datetime_run_count)
+        del(set_started_to_run_run_count)
 
     def test_action(self):
         fake_abstract_job = fake.FakeAbstractJob()
@@ -42,10 +50,12 @@ class TestJobActivityBase(TestCase):
     @mock.patch('hangpy.services.job_activity_base.JobActivityBase.set_job_status', side_effect=set_job_status_side_effect)
     @mock.patch('hangpy.services.job_activity_base.JobActivityBase.set_job_error', side_effect=set_job_error_side_effect)
     @mock.patch('hangpy.services.job_activity_base.JobActivityBase.set_job_end_datetime', side_effect=set_job_end_datetime_side_effect)
-    def test_start(self, set_job_status_mock, set_job_error_mock, set_job_end_datetime_mock):
+    @mock.patch('hangpy.services.job_activity_base.JobActivityBase.set_started_to_run', side_effect=set_started_to_run_side_effect)
+    def test_start(self, set_job_status_mock, set_job_error_mock, set_job_end_datetime_mock, set_started_to_run_mock):
         global set_job_status_run_count
         global set_job_error_run_count
         global set_job_end_datetime_run_count
+        global set_started_to_run_run_count
         fake.fake_job_action_result = None
         job_activity = fake.FakeJob()
         job_activity.start()
@@ -55,11 +65,13 @@ class TestJobActivityBase(TestCase):
         self.assertEqual(set_job_status_run_count, 1)
         self.assertEqual(set_job_error_run_count, 0)
         self.assertEqual(set_job_end_datetime_run_count, 1)
+        self.assertEqual(set_started_to_run_run_count, 1)
 
     @mock.patch('hangpy.services.job_activity_base.JobActivityBase.set_job_status', side_effect=set_job_status_side_effect)
     @mock.patch('hangpy.services.job_activity_base.JobActivityBase.set_job_error', side_effect=set_job_error_side_effect)
     @mock.patch('hangpy.services.job_activity_base.JobActivityBase.set_job_end_datetime', side_effect=set_job_end_datetime_side_effect)
-    def test_start_exception(self, set_job_status_mock, set_job_error_mock, set_job_end_datetime_mock):
+    @mock.patch('hangpy.services.job_activity_base.JobActivityBase.set_started_to_run', side_effect=set_started_to_run_side_effect)
+    def test_start_exception(self, set_job_status_mock, set_job_error_mock, set_job_end_datetime_mock, set_started_to_run_mock):
         global set_job_status_run_count
         global set_job_error_run_count
         global set_job_end_datetime_run_count
@@ -69,6 +81,7 @@ class TestJobActivityBase(TestCase):
         self.assertEqual(set_job_status_run_count, 1)
         self.assertEqual(set_job_error_run_count, 1)
         self.assertEqual(set_job_end_datetime_run_count, 1)
+        self.assertEqual(set_started_to_run_run_count, 1)
 
     def test_get_job_object(self):
         job_activity = fake.FakeJob()

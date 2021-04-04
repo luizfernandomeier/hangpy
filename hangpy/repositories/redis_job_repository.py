@@ -1,6 +1,8 @@
+from hangpy.entities import Job
 from hangpy.enums import JobStatus
 from hangpy.repositories import RedisRepositoryBase
 from hangpy.repositories import AbstractJobRepository
+from hangpy.services import JobActivityBase
 
 class RedisJobRepository(AbstractJobRepository, RedisRepositoryBase):
 
@@ -13,21 +15,21 @@ class RedisJobRepository(AbstractJobRepository, RedisRepositoryBase):
         return self._deserialize_entries(serialized_jobs)
     
     # TODO: refactor this method so it doesn't need to get all the jobs each time
-    def get_jobs_by_status(self, status):
+    def get_jobs_by_status(self, status: JobStatus):
         jobs = self.get_jobs()
         return [job for job in jobs if job.status is status]
 
-    def add_job(self, job_activity):
+    def add_job(self, job_activity: JobActivityBase):
         job = job_activity.get_job_object()
         self.__set_job(job)
 
-    def update_job(self, job):
+    def update_job(self, job: Job):
         self.__set_job(job)
     
-    def update_jobs(self, jobs):
+    def update_jobs(self, jobs: list[Job]):
         for job in jobs:
             self.update_job(job)
 
-    def __set_job(self, job):
+    def __set_job(self, job: Job):
         serialized_job = self._serialize_entry(job)
         self.redis_client.set(f'job.{job.id}', serialized_job)

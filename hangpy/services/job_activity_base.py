@@ -38,6 +38,7 @@ class JobActivityBase(ABC, threading.Thread):
 
     def run(self):
         try:
+            self.set_started_to_run()
             self.action()
             self.set_job_status(JobStatus.SUCCESS)
         except Exception as err:

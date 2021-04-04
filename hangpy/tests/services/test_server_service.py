@@ -36,6 +36,13 @@ class FakeJobActivity:
         global fake_job_activity_start_run_count
         fake_job_activity_start_run_count += 1
     
+    def set_job(self, job):
+        global fake_job_activity_set_job_run_count
+        fake_job_activity_set_job_run_count += 1
+    
+    def get_job(self):
+        return Job('some_module', 'some_class')
+    
     def is_finished(self):
         return self.finished
 
@@ -104,6 +111,7 @@ class TestServerService(TestCase):
         global run_job_run_count
         global log_exception_message_test
         global fake_job_activity_start_run_count
+        global fake_job_activity_set_job_run_count
         global fake_job_activity_exception_start_run_count
         global fake_server_repository_update_server_run_count
         global fake_job_repository_update_job_run_count
@@ -120,6 +128,7 @@ class TestServerService(TestCase):
         run_job_run_count = 0
         log_exception_message_test = None
         fake_job_activity_start_run_count = 0
+        fake_job_activity_set_job_run_count = 0
         fake_job_activity_exception_start_run_count = 0
         fake_server_repository_update_server_run_count = 0
         fake_job_repository_update_job_run_count = 0
@@ -138,6 +147,7 @@ class TestServerService(TestCase):
         global run_job_run_count
         global log_exception_message_test
         global fake_job_activity_start_run_count
+        global fake_job_activity_set_job_run_count
         global fake_job_activity_exception_start_run_count
         global fake_server_repository_update_server_run_count
         global fake_job_repository_update_job_run_count
@@ -154,6 +164,7 @@ class TestServerService(TestCase):
         del(run_job_run_count)
         del(log_exception_message_test)
         del(fake_job_activity_start_run_count)
+        del(fake_job_activity_set_job_run_count)
         del(fake_job_activity_exception_start_run_count)
         del(fake_server_repository_update_server_run_count)
         del(fake_job_repository_update_job_run_count)
@@ -319,10 +330,12 @@ class TestServerService(TestCase):
         self.assertEqual(len(server_service.job_activities_assigned), 2)
 
     def test_get_job_activity_instance(self):
+        global fake_job_activity_set_job_run_count
         server_service = ServerService(None, None, None, None)
         job = Job(FakeJobActivity().__module__, FakeJobActivity().__class__.__name__)
         job_instance = server_service.get_job_activity_instance(job)
         self.assertIsInstance(job_instance, FakeJobActivity)
+        self.assertEqual(fake_job_activity_set_job_run_count, 1)
 
     @freeze_time('1988-04-10 11:01:02.123456')
     def test_set_server_cycle_state(self):
