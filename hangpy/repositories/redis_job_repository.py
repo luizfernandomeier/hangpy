@@ -29,6 +29,9 @@ class RedisJobRepository(AbstractJobRepository, RedisRepositoryBase):
     def update_jobs(self, jobs: list[Job]):
         for job in jobs:
             self.update_job(job)
+    
+    def try_set_lock_on_job(self, job: Job):
+        return self.redis_client.setnx(f'lock.job.{job.id}', 1)
 
     def __set_job(self, job: Job):
         serialized_job = self._serialize_entry(job)

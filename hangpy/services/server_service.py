@@ -2,7 +2,9 @@ import datetime
 import importlib
 import threading
 import time
+from hangpy.entities import Job
 from hangpy.enums import JobStatus
+from hangpy.services import JobActivityBase
 
 class ServerService(threading.Thread):
     
@@ -35,6 +37,8 @@ class ServerService(threading.Thread):
             for job in jobs:
                 if (not self.run_enabled()):
                     break
+                if (not self.try_set_lock_on_job(job)):
+                    continue
                 self.wait_until_slot_is_open()
                 self.run_job(job)
         except Exception as err:
@@ -62,7 +66,7 @@ class ServerService(threading.Thread):
     def get_enqueued_jobs(self):
         return self.job_repository.get_jobs_by_status(JobStatus.ENQUEUED)
 
-    def run_job(self, job):
+    def run_job(self, job: Job):
         try:
             self.set_job_start_state(job)
             self.log(f'\nProcessing job: {job.id}')
@@ -72,10 +76,10 @@ class ServerService(threading.Thread):
         except Exception as err:
             self.log(f'Error: {err}')
 
-    def add_job_activity_assigned(self, job_activity_instance):
+    def add_job_activity_assigned(self, job_activity_instance: JobActivityBase):
         self.job_activities_assigned.append(job_activity_instance)
 
-    def get_job_activity_instance(self, job):
+    def get_job_activity_instance(self, job: Job):
         job_module = importlib.import_module(job.module_name)
         job_class = getattr(job_module, job.class_name)
         job_activity_instance = job_class()
@@ -90,11 +94,14 @@ class ServerService(threading.Thread):
         self.server.stop_datetime = datetime.datetime.now().isoformat()
         self.server_repository.update_server(self.server)
 
-    def set_job_start_state(self, job):
+    def set_job_start_state(self, job: Job):
         job.start_datetime = datetime.datetime.now().isoformat()
         job.status = JobStatus.PROCESSING
         self.job_repository.update_job(job)
     
+    def try_set_lock_on_job(self, job: Job):
+        return self.job_repository.try_set_lock_on_job(job)
+
     # TODO: Implement custom logger
     def log(self, message):
         print(message)

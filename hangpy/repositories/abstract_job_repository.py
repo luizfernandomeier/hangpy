@@ -21,3 +21,8 @@ class AbstractJobRepository(ABC):
     @abstractmethod
     def update_jobs(self, jobs):
         pass
+
+    @abstractmethod
+    def try_set_lock_on_job(self, job):
+        """The implementation of this method must be atomic"""
+        pass

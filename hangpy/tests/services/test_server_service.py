@@ -21,6 +21,10 @@ class FakeJobRepository:
         global fake_job_repository_update_jobs_test_count
         fake_job_repository_update_jobs_run_count += 1
         fake_job_repository_update_jobs_test_count += len(jobs)
+    
+    set_lock_return = True
+    def try_set_lock_on_job(self, job):
+        return self.set_lock_return
 
 class FakeServerRepository:
     def update_server(self, server):
@@ -210,7 +214,8 @@ class TestServerService(TestCase):
     @mock.patch('hangpy.services.server_service.ServerService.run_enabled', side_effect=run_enabled_side_effect)
     @mock.patch('hangpy.services.server_service.ServerService.wait_until_slot_is_open')
     @mock.patch('hangpy.services.server_service.ServerService.run_job', side_effect=run_job_side_effect)
-    def test_run_cycle(self, set_server_cycle_state_mock, clear_finished_jobs_mock, get_enqueued_jobs_mock, run_enabled_mock, wait_until_slot_is_open_mock, run_job_mock):
+    @mock.patch('hangpy.services.server_service.ServerService.try_set_lock_on_job', return_value=True)
+    def test_run_cycle(self, set_server_cycle_state_mock, clear_finished_jobs_mock, get_enqueued_jobs_mock, run_enabled_mock, wait_until_slot_is_open_mock, run_job_mock, try_set_lock_on_job_mock):
         global run_job_run_count
         server_service = ServerService(None, None, None, None)
         server_service.run_cycle()
@@ -219,11 +224,25 @@ class TestServerService(TestCase):
     @mock.patch('hangpy.services.server_service.ServerService.set_server_cycle_state')
     @mock.patch('hangpy.services.server_service.ServerService.clear_finished_jobs')
     @mock.patch('hangpy.services.server_service.ServerService.get_enqueued_jobs', side_effect=get_enqueued_jobs_side_effect)
+    @mock.patch('hangpy.services.server_service.ServerService.run_enabled', side_effect=run_enabled_side_effect)
+    @mock.patch('hangpy.services.server_service.ServerService.wait_until_slot_is_open')
+    @mock.patch('hangpy.services.server_service.ServerService.run_job', side_effect=run_job_side_effect)
+    @mock.patch('hangpy.services.server_service.ServerService.try_set_lock_on_job', return_value=False)
+    def test_run_cycle_when_cannot_set_lock_on_job(self, set_server_cycle_state_mock, clear_finished_jobs_mock, get_enqueued_jobs_mock, run_enabled_mock, wait_until_slot_is_open_mock, run_job_mock, try_set_lock_on_job_mock):
+        global run_job_run_count
+        server_service = ServerService(None, None, None, None)
+        server_service.run_cycle()
+        self.assertEqual(run_job_run_count, 0)
+
+    @mock.patch('hangpy.services.server_service.ServerService.set_server_cycle_state')
+    @mock.patch('hangpy.services.server_service.ServerService.clear_finished_jobs')
+    @mock.patch('hangpy.services.server_service.ServerService.get_enqueued_jobs', side_effect=get_enqueued_jobs_side_effect)
     @mock.patch('hangpy.services.server_service.ServerService.run_enabled', return_value=True)
     @mock.patch('hangpy.services.server_service.ServerService.wait_until_slot_is_open')
     @mock.patch('hangpy.services.server_service.ServerService.run_job', side_effect=run_job_exception_side_effect)
     @mock.patch('hangpy.services.server_service.ServerService.log', side_effect=log_side_effect)
-    def test_run_cycle_exception(self, set_server_cycle_state_mock, clear_finished_jobs_mock, get_enqueued_jobs_mock, run_enabled_mock, wait_until_slot_is_open_mock, run_job_mock, log_mock):
+    @mock.patch('hangpy.services.server_service.ServerService.try_set_lock_on_job', return_value=True)
+    def test_run_cycle_exception(self, set_server_cycle_state_mock, clear_finished_jobs_mock, get_enqueued_jobs_mock, run_enabled_mock, wait_until_slot_is_open_mock, run_job_mock, log_mock, try_set_lock_on_job_mock):
         global log_exception_message_test
         server_service = ServerService(None, None, None, None)
         server_service.run_cycle()
@@ -371,6 +390,19 @@ class TestServerService(TestCase):
         server_service = ServerService(None, None, None, None)
         server_service.log('some log message')
         self.assertEqual(print_message_test, 'some log message')
+
+    def test_try_set_lock_on_job(self):
+        job_repository = FakeJobRepository()
+        server_service = ServerService(None, None, None, job_repository)
+        job = Job('module_test', 'class_test')
+
+        job_repository.set_lock_return = True
+        locked = server_service.try_set_lock_on_job(job)
+        self.assertTrue(locked)
+
+        job_repository.set_lock_return = False
+        locked = server_service.try_set_lock_on_job(job)
+        self.assertFalse(locked)
 
 if (__name__ == "__main__"):
     main()

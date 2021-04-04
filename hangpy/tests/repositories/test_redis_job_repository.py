@@ -76,5 +76,29 @@ class TestRedisJobRepository(unittest.TestCase):
         self.assertEqual(actual_jobs[0].status, JobStatus.ERROR)
         self.assertEqual(actual_jobs[1].status, JobStatus.PROCESSING)
 
+    def test_try_set_lock_on_job(self):
+        redis_client = fakeredis.FakeStrictRedis()
+        job_repository = RedisJobRepository(redis_client)
+        fake_job1 = fake.FakeJob()
+        fake_job2 = fake.FakeJob()
+        job_repository.add_job(fake_job1)
+        job_repository.add_job(fake_job2)
+        jobs = job_repository.get_jobs()
+
+        actual_lock_set = job_repository.try_set_lock_on_job(jobs[0])
+        self.assertTrue(actual_lock_set)
+
+        actual_lock_set = job_repository.try_set_lock_on_job(jobs[0])
+        self.assertFalse(actual_lock_set)
+
+        actual_lock_set = job_repository.try_set_lock_on_job(jobs[0])
+        self.assertFalse(actual_lock_set)
+
+        actual_lock_set = job_repository.try_set_lock_on_job(jobs[1])
+        self.assertTrue(actual_lock_set)
+
+        actual_lock_set = job_repository.try_set_lock_on_job(jobs[1])
+        self.assertFalse(actual_lock_set)
+
 if (__name__ == '__main__'):
     unittest.main()
