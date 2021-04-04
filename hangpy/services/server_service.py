@@ -53,11 +53,11 @@ class ServerService(threading.Thread):
         self.remove_finished_jobs()        
 
     def save_finished_jobs(self):
-        finished_jobs = [job for job in self.job_activities_assigned if job.is_finished()]
+        finished_jobs = [job_activity.get_job() for job_activity in self.job_activities_assigned if job_activity.is_finished()]
         self.job_repository.update_jobs(finished_jobs)
 
     def remove_finished_jobs(self):
-        self.job_activities_assigned = [job for job in self.job_activities_assigned if not job.is_finished()]
+        self.job_activities_assigned = [job_activity for job_activity in self.job_activities_assigned if not job_activity.is_finished()]
 
     def get_enqueued_jobs(self):
         return self.job_repository.get_jobs_by_status(JobStatus.ENQUEUED)
@@ -78,7 +78,9 @@ class ServerService(threading.Thread):
     def get_job_activity_instance(self, job):
         job_module = importlib.import_module(job.module_name)
         job_class = getattr(job_module, job.class_name)
-        return job_class()
+        job_activity_instance = job_class()
+        job_activity_instance.set_job(job)
+        return job_activity_instance
 
     def set_server_cycle_state(self):
         self.server.last_cycle_datetime = datetime.datetime.now().isoformat()
