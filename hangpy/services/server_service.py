@@ -12,6 +12,7 @@ class ServerService(threading.Thread):
         self.server_configuration = server_configuration
         self.server_repository = server_repository
         self.job_repository = job_repository
+        self.job_activities_assigned = []
         threading.Thread.__init__(self)
 
     def run(self):
@@ -29,28 +30,50 @@ class ServerService(threading.Thread):
     def run_cycle(self):
         try:
             self.set_server_cycle_state()
+            self.clear_finished_jobs()
             jobs = self.get_enqueued_jobs()
             for job in jobs:
                 if (not self.run_enabled()):
                     break
+                self.wait_until_slot_is_open()
                 self.run_job(job)
         except Exception as err:
             self.log(f'An error ocurred during the job processing cycle: {err}')
+
+    def wait_until_slot_is_open(self):
+        while (self.slots_limit_reached()):
+            self.clear_finished_jobs()
+            time.sleep(0.1)
+    
+    def slots_limit_reached(self):
+        return len(self.job_activities_assigned) >= self.server.slots
+
+    def clear_finished_jobs(self):
+        self.save_finished_jobs()
+        self.remove_finished_jobs()        
+
+    def save_finished_jobs(self):
+        finished_jobs = [job for job in self.job_activities_assigned if job.is_finished()]
+        self.job_repository.update_jobs(finished_jobs)
+
+    def remove_finished_jobs(self):
+        self.job_activities_assigned = [job for job in self.job_activities_assigned if not job.is_finished()]
 
     def get_enqueued_jobs(self):
         return self.job_repository.get_jobs_by_status(JobStatus.ENQUEUED)
 
     def run_job(self, job):
-        self.set_job_start_state(job)
         try:
+            self.set_job_start_state(job)
             self.log(f'\nProcessing job: {job.id}')
             job_activity_instance = self.get_job_activity_instance(job)
+            self.add_job_activity_assigned(job_activity_instance)
             job_activity_instance.start()
-            job.status = JobStatus.SUCCESS
         except Exception as err:
-            job.status = JobStatus.ERROR
             self.log(f'Error: {err}')
-        self.set_job_stop_state(job)
+
+    def add_job_activity_assigned(self, job_activity_instance):
+        self.job_activities_assigned.append(job_activity_instance)
 
     def get_job_activity_instance(self, job):
         job_module = importlib.import_module(job.module_name)
@@ -68,10 +91,6 @@ class ServerService(threading.Thread):
     def set_job_start_state(self, job):
         job.start_datetime = datetime.datetime.now().isoformat()
         job.status = JobStatus.PROCESSING
-        self.job_repository.update_job(job)
-
-    def set_job_stop_state(self, job):
-        job.end_datetime = datetime.datetime.now().isoformat()
         self.job_repository.update_job(job)
     
     # TODO: Implement custom logger

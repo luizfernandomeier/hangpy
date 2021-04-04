@@ -10,6 +10,7 @@ class Job():
         self.module_name = module_name
         self.class_name = class_name
         self.status = JobStatus.ENQUEUED
+        self.error = None
         self.enqueued_datetime = datetime.datetime.now().isoformat()
         self.start_datetime = None
         self.end_datetime = None

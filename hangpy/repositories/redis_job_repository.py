@@ -23,6 +23,10 @@ class RedisJobRepository(AbstractJobRepository, RedisRepositoryBase):
 
     def update_job(self, job):
         self.__set_job(job)
+    
+    def update_jobs(self, jobs):
+        for job in jobs:
+            self.update_job(job)
 
     def __set_job(self, job):
         serialized_job = self._serialize_entry(job)
