@@ -21,9 +21,10 @@ class TestJob(unittest.TestCase):
         self.assertEqual(job.module_name, 'module1')
         self.assertEqual(job.class_name, 'class2')
         self.assertEqual(job.status, JobStatus.ENQUEUED)
+        self.assertIsNone(job.error)
         self.assertEqual(job.enqueued_datetime, '1988-04-10T11:01:02.123456')
-        self.assertEqual(job.start_datetime, None)
-        self.assertEqual(job.end_datetime, None)
+        self.assertIsNone(job.start_datetime)
+        self.assertIsNone(job.end_datetime)
         self.assertListEqual(job.parameters, [])
 
         with self.assertRaises(ValueError):

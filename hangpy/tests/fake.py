@@ -7,6 +7,10 @@ class FakeJob(JobActivityBase):
         global fake_job_action_result
         fake_job_action_result = "executed the action"
 
+class FakeJobException(JobActivityBase):
+    def action(self):
+        raise Exception('fake job exception message')
+
 class FakeAbstractJob(JobActivityBase):
     def action(self):
         return JobActivityBase.action(self)

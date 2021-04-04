@@ -17,3 +17,7 @@ class AbstractJobRepository(ABC):
     @abstractmethod
     def update_job(self, job):
         pass
+
+    @abstractmethod
+    def update_jobs(self, jobs):
+        pass
