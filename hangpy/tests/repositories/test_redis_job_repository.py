@@ -30,16 +30,29 @@ class TestRedisJobRepository(unittest.TestCase):
         job_repository = RedisJobRepository(redis_client)
         fake_job = fake.FakeJob()
         job_repository.add_job(fake_job)
+
         actual_job = job_repository.get_jobs_by_status(JobStatus.ENQUEUED)[0]
         expected_job = fake_job.get_job_object()
+        self.assertEqual(actual_job.module_name, expected_job.module_name)
+        self.assertEqual(actual_job.class_name, expected_job.class_name)
+        self.assertListEqual(actual_job.parameters, expected_job.parameters)
 
+        job = actual_job
+        job.status = JobStatus.PROCESSING
+        job_repository.update_job(job)
+
+        actual_jobs = job_repository.get_jobs_by_status(JobStatus.ENQUEUED)
+        expected_jobs = []
+        self.assertListEqual(actual_jobs, expected_jobs)
+
+        actual_job = job_repository.get_jobs_by_status(JobStatus.PROCESSING)[0]
+        expected_job = fake_job.get_job_object()
         self.assertEqual(actual_job.module_name, expected_job.module_name)
         self.assertEqual(actual_job.class_name, expected_job.class_name)
         self.assertListEqual(actual_job.parameters, expected_job.parameters)
 
         actual_jobs = job_repository.get_jobs_by_status(JobStatus.SUCCESS)
         expected_jobs = []
-
         self.assertListEqual(actual_jobs, expected_jobs)
 
     def test_update_job(self):
