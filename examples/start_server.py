@@ -1,8 +1,11 @@
 import hangpy
 import redis
+import sys
+
+slots = int(sys.argv[1])
 
 server_configuration = hangpy.ServerConfigurationDto()
-server = hangpy.Server()
+server = hangpy.Server(slots)
 
 print('\nThe HangPy server is running!')
 print(f'Server id: {server.id}')
@@ -16,8 +19,7 @@ server_repository = hangpy.RedisServerRepository(redis_client)
 
 server_repository.add_server(server)
 
-server_service = hangpy.ServerService(server, server_configuration, \
-    server_repository, job_repository)
+server_service = hangpy.ServerService(server, server_configuration, server_repository, job_repository)
 
 exit_message = "To exit the server, type 'exit'."
 print(f'\n{exit_message}')
