@@ -33,11 +33,13 @@ class ServerService(threading.Thread):
         try:
             self.set_server_cycle_state()
             self.clear_finished_jobs()
-            jobs = self.get_enqueued_jobs()
-            for job in jobs:
+            while (True):
                 if (not self.run_enabled()):
                     break
                 self.wait_until_slot_is_open()
+                job = self.get_next_enqueued_job()
+                if (job is None):
+                    break
                 if (not self.try_set_lock_on_job(job)):
                     continue
                 self.run_job(job)
@@ -54,17 +56,20 @@ class ServerService(threading.Thread):
 
     def clear_finished_jobs(self):
         self.save_finished_jobs()
-        self.remove_finished_jobs()        
+        self.untrack_jobs()        
 
     def save_finished_jobs(self):
-        finished_jobs = [job_activity.get_job() for job_activity in self.job_activities_assigned if job_activity.is_finished()]
+        finished_activities = [job_activity for job_activity in self.job_activities_assigned if job_activity.is_finished()]
+        finished_jobs = [job_activity.get_job() for job_activity in finished_activities]
         self.job_repository.update_jobs(finished_jobs)
+        for job_activity in finished_activities:
+            job_activity.set_can_be_untracked()
 
-    def remove_finished_jobs(self):
-        self.job_activities_assigned = [job_activity for job_activity in self.job_activities_assigned if not job_activity.is_finished()]
+    def untrack_jobs(self):
+        self.job_activities_assigned = [job_activity for job_activity in self.job_activities_assigned if not job_activity.can_be_untracked()]
 
-    def get_enqueued_jobs(self):
-        return self.job_repository.get_jobs_by_status(JobStatus.ENQUEUED)
+    def get_next_enqueued_job(self):
+        return self.job_repository.get_job_by_status(JobStatus.ENQUEUED)
 
     def run_job(self, job: Job):
         try:

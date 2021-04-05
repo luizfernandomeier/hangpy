@@ -3,6 +3,10 @@ from abc import ABC, abstractmethod
 class AbstractJobRepository(ABC):
 
     @abstractmethod
+    def get_job_by_status(self, status):
+        pass
+
+    @abstractmethod
     def get_jobs_by_status(self, status):
         pass
 

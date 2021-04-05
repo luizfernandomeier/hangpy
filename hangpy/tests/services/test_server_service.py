@@ -7,10 +7,9 @@ from hangpy.enums import JobStatus
 from hangpy.services import ServerService
 from unittest import TestCase, mock, main
 
-class FakeJobRepository:
-    def get_jobs_by_status(self, status):
-        job = Job('module_test', 'class_test')
-        return [job, job, job]
+class FakeJobRepository:   
+    def get_job_by_status(self, status):
+        return Job('module_test', 'class_test')
     
     def update_job(self, job):
         global fake_job_repository_update_job_run_count
@@ -34,7 +33,8 @@ class FakeServerRepository:
 class FakeJobActivity:
 
     def __init__(self):
-        self.finished = False
+        self._finished = False
+        self._can_be_untracked = False
 
     def start(self):
         global fake_job_activity_start_run_count
@@ -48,7 +48,15 @@ class FakeJobActivity:
         return Job('some_module', 'some_class')
     
     def is_finished(self):
-        return self.finished
+        return self._finished
+
+    def set_can_be_untracked(self):
+        global fake_job_activity_set_can_be_untracked_run_count
+        fake_job_activity_set_can_be_untracked_run_count += 1
+        self._can_be_untracked = True
+    
+    def can_be_untracked(self):
+        return self._can_be_untracked
 
 class FakeJobActivityException:
     def start(self):
@@ -65,9 +73,13 @@ def run_cycle_side_effect(*args):
     global run_cycle_run_count
     run_cycle_run_count += 1
 
-def get_enqueued_jobs_side_effect(*args):
+def get_next_enqueued_job_side_effect(*args):
+    global get_next_enqueued_job_run_count
+    get_next_enqueued_job_run_count += 1
     job = Job('module_test', 'class_test')
-    return [job, job, job]
+    if (get_next_enqueued_job_run_count <= 3):
+        return job
+    return None
 
 def run_job_side_effect(*args):
     global run_job_run_count
@@ -99,9 +111,9 @@ def save_finished_jobs_side_effect(*args):
     global save_finished_jobs_run_count
     save_finished_jobs_run_count += 1
 
-def remove_finished_jobs_side_effect(*args):
-    global remove_finished_jobs_run_count
-    remove_finished_jobs_run_count += 1
+def untrack_jobs_side_effect(*args):
+    global untrack_jobs_run_count
+    untrack_jobs_run_count += 1
 
 def print_side_effect(*args):
     global print_message_test
@@ -116,6 +128,7 @@ class TestServerService(TestCase):
         global log_exception_message_test
         global fake_job_activity_start_run_count
         global fake_job_activity_set_job_run_count
+        global fake_job_activity_set_can_be_untracked_run_count
         global fake_job_activity_exception_start_run_count
         global fake_server_repository_update_server_run_count
         global fake_job_repository_update_job_run_count
@@ -125,14 +138,16 @@ class TestServerService(TestCase):
         global clear_finished_jobs_run_count
         global slots_limit_reached_run_count
         global save_finished_jobs_run_count
-        global remove_finished_jobs_run_count
+        global untrack_jobs_run_count
         global updated_jobs_run_count
+        global get_next_enqueued_job_run_count
         run_enabled_run_count = 0
         run_cycle_run_count = 0
         run_job_run_count = 0
         log_exception_message_test = None
         fake_job_activity_start_run_count = 0
         fake_job_activity_set_job_run_count = 0
+        fake_job_activity_set_can_be_untracked_run_count = 0
         fake_job_activity_exception_start_run_count = 0
         fake_server_repository_update_server_run_count = 0
         fake_job_repository_update_job_run_count = 0
@@ -142,8 +157,9 @@ class TestServerService(TestCase):
         clear_finished_jobs_run_count = 0
         slots_limit_reached_run_count = 0
         save_finished_jobs_run_count = 0
-        remove_finished_jobs_run_count = 0
+        untrack_jobs_run_count = 0
         updated_jobs_run_count = 0
+        get_next_enqueued_job_run_count = 0
 
     def tearDownClass():
         global run_enabled_run_count
@@ -152,6 +168,7 @@ class TestServerService(TestCase):
         global log_exception_message_test
         global fake_job_activity_start_run_count
         global fake_job_activity_set_job_run_count
+        global fake_job_activity_set_can_be_untracked_run_count
         global fake_job_activity_exception_start_run_count
         global fake_server_repository_update_server_run_count
         global fake_job_repository_update_job_run_count
@@ -161,14 +178,16 @@ class TestServerService(TestCase):
         global clear_finished_jobs_run_count
         global slots_limit_reached_run_count
         global save_finished_jobs_run_count
-        global remove_finished_jobs_run_count
+        global untrack_jobs_run_count
         global updated_jobs_run_count
+        global get_next_enqueued_job_run_count
         del(run_enabled_run_count)
         del(run_cycle_run_count)
         del(run_job_run_count)
         del(log_exception_message_test)
         del(fake_job_activity_start_run_count)
         del(fake_job_activity_set_job_run_count)
+        del(fake_job_activity_set_can_be_untracked_run_count)
         del(fake_job_activity_exception_start_run_count)
         del(fake_server_repository_update_server_run_count)
         del(fake_job_repository_update_job_run_count)
@@ -178,8 +197,9 @@ class TestServerService(TestCase):
         del(clear_finished_jobs_run_count)
         del(slots_limit_reached_run_count)
         del(save_finished_jobs_run_count)
-        del(remove_finished_jobs_run_count)
+        del(untrack_jobs_run_count)
         del(updated_jobs_run_count)
+        del(get_next_enqueued_job_run_count)
 
     @mock.patch('hangpy.services.server_service.ServerService.run_enabled', side_effect=run_enabled_side_effect)
     @mock.patch('hangpy.services.server_service.ServerService.run_cycle', side_effect=run_cycle_side_effect)
@@ -210,12 +230,25 @@ class TestServerService(TestCase):
     
     @mock.patch('hangpy.services.server_service.ServerService.set_server_cycle_state')
     @mock.patch('hangpy.services.server_service.ServerService.clear_finished_jobs')
-    @mock.patch('hangpy.services.server_service.ServerService.get_enqueued_jobs', side_effect=get_enqueued_jobs_side_effect)
+    @mock.patch('hangpy.services.server_service.ServerService.get_next_enqueued_job', side_effect=get_next_enqueued_job_side_effect)
+    @mock.patch('hangpy.services.server_service.ServerService.run_enabled', return_value=True)
+    @mock.patch('hangpy.services.server_service.ServerService.wait_until_slot_is_open')
+    @mock.patch('hangpy.services.server_service.ServerService.run_job', side_effect=run_job_side_effect)
+    @mock.patch('hangpy.services.server_service.ServerService.try_set_lock_on_job', return_value=True)
+    def test_run_cycle(self, set_server_cycle_state_mock, clear_finished_jobs_mock, get_next_enqueued_job_mock, run_enabled_mock, wait_until_slot_is_open_mock, run_job_mock, try_set_lock_on_job_mock):
+        global run_job_run_count
+        server_service = ServerService(None, None, None, None)
+        server_service.run_cycle()
+        self.assertEqual(run_job_run_count, 3)
+
+    @mock.patch('hangpy.services.server_service.ServerService.set_server_cycle_state')
+    @mock.patch('hangpy.services.server_service.ServerService.clear_finished_jobs')
+    @mock.patch('hangpy.services.server_service.ServerService.get_next_enqueued_job', side_effect=get_next_enqueued_job_side_effect)
     @mock.patch('hangpy.services.server_service.ServerService.run_enabled', side_effect=run_enabled_side_effect)
     @mock.patch('hangpy.services.server_service.ServerService.wait_until_slot_is_open')
     @mock.patch('hangpy.services.server_service.ServerService.run_job', side_effect=run_job_side_effect)
     @mock.patch('hangpy.services.server_service.ServerService.try_set_lock_on_job', return_value=True)
-    def test_run_cycle(self, set_server_cycle_state_mock, clear_finished_jobs_mock, get_enqueued_jobs_mock, run_enabled_mock, wait_until_slot_is_open_mock, run_job_mock, try_set_lock_on_job_mock):
+    def test_run_cycle_with_run_disabled(self, set_server_cycle_state_mock, clear_finished_jobs_mock, get_next_enqueued_job_mock, run_enabled_mock, wait_until_slot_is_open_mock, run_job_mock, try_set_lock_on_job_mock):
         global run_job_run_count
         server_service = ServerService(None, None, None, None)
         server_service.run_cycle()
@@ -223,12 +256,12 @@ class TestServerService(TestCase):
 
     @mock.patch('hangpy.services.server_service.ServerService.set_server_cycle_state')
     @mock.patch('hangpy.services.server_service.ServerService.clear_finished_jobs')
-    @mock.patch('hangpy.services.server_service.ServerService.get_enqueued_jobs', side_effect=get_enqueued_jobs_side_effect)
+    @mock.patch('hangpy.services.server_service.ServerService.get_next_enqueued_job', side_effect=get_next_enqueued_job_side_effect)
     @mock.patch('hangpy.services.server_service.ServerService.run_enabled', side_effect=run_enabled_side_effect)
     @mock.patch('hangpy.services.server_service.ServerService.wait_until_slot_is_open')
     @mock.patch('hangpy.services.server_service.ServerService.run_job', side_effect=run_job_side_effect)
     @mock.patch('hangpy.services.server_service.ServerService.try_set_lock_on_job', return_value=False)
-    def test_run_cycle_when_cannot_set_lock_on_job(self, set_server_cycle_state_mock, clear_finished_jobs_mock, get_enqueued_jobs_mock, run_enabled_mock, wait_until_slot_is_open_mock, run_job_mock, try_set_lock_on_job_mock):
+    def test_run_cycle_when_cannot_set_lock_on_job(self, set_server_cycle_state_mock, clear_finished_jobs_mock, get_next_enqueued_job_mock, run_enabled_mock, wait_until_slot_is_open_mock, run_job_mock, try_set_lock_on_job_mock):
         global run_job_run_count
         server_service = ServerService(None, None, None, None)
         server_service.run_cycle()
@@ -236,13 +269,13 @@ class TestServerService(TestCase):
 
     @mock.patch('hangpy.services.server_service.ServerService.set_server_cycle_state')
     @mock.patch('hangpy.services.server_service.ServerService.clear_finished_jobs')
-    @mock.patch('hangpy.services.server_service.ServerService.get_enqueued_jobs', side_effect=get_enqueued_jobs_side_effect)
+    @mock.patch('hangpy.services.server_service.ServerService.get_next_enqueued_job', side_effect=get_next_enqueued_job_side_effect)
     @mock.patch('hangpy.services.server_service.ServerService.run_enabled', return_value=True)
     @mock.patch('hangpy.services.server_service.ServerService.wait_until_slot_is_open')
     @mock.patch('hangpy.services.server_service.ServerService.run_job', side_effect=run_job_exception_side_effect)
     @mock.patch('hangpy.services.server_service.ServerService.log', side_effect=log_side_effect)
     @mock.patch('hangpy.services.server_service.ServerService.try_set_lock_on_job', return_value=True)
-    def test_run_cycle_exception(self, set_server_cycle_state_mock, clear_finished_jobs_mock, get_enqueued_jobs_mock, run_enabled_mock, wait_until_slot_is_open_mock, run_job_mock, log_mock, try_set_lock_on_job_mock):
+    def test_run_cycle_exception(self, set_server_cycle_state_mock, clear_finished_jobs_mock, get_next_enqueued_job_mock, run_enabled_mock, wait_until_slot_is_open_mock, run_job_mock, log_mock, try_set_lock_on_job_mock):
         global log_exception_message_test
         server_service = ServerService(None, None, None, None)
         server_service.run_cycle()
@@ -275,17 +308,18 @@ class TestServerService(TestCase):
         self.assertFalse(server_service.slots_limit_reached())
 
     @mock.patch('hangpy.services.server_service.ServerService.save_finished_jobs', side_effect=save_finished_jobs_side_effect)
-    @mock.patch('hangpy.services.server_service.ServerService.remove_finished_jobs', side_effect=remove_finished_jobs_side_effect)
-    def test_clear_finished_jobs(self, save_finished_jobs_mock, remove_finished_jobs_mock):
+    @mock.patch('hangpy.services.server_service.ServerService.untrack_jobs', side_effect=untrack_jobs_side_effect)
+    def test_clear_finished_jobs(self, save_finished_jobs_mock, untrack_jobs_mock):
         global save_finished_jobs_run_count
-        global remove_finished_jobs_run_count
+        global untrack_jobs_run_count
         server_service = ServerService(None, None, None, None)
         server_service.clear_finished_jobs()
         self.assertEqual(save_finished_jobs_run_count, 1)
-        self.assertEqual(remove_finished_jobs_run_count, 1)
+        self.assertEqual(untrack_jobs_run_count, 1)
     
     def test_save_finished_jobs(self):
         global fake_job_repository_update_jobs_run_count
+        global fake_job_activity_set_can_be_untracked_run_count
         server_service = ServerService(None, None, None, FakeJobRepository())
         job_activity_running = FakeJobActivity()
         server_service.job_activities_assigned.append(job_activity_running)
@@ -294,29 +328,31 @@ class TestServerService(TestCase):
         self.assertEqual(fake_job_repository_update_jobs_test_count, 0)
 
         job_activity_finished = FakeJobActivity()
-        job_activity_finished.finished = True
+        job_activity_finished._finished = True
         server_service.job_activities_assigned.append(job_activity_finished)
         server_service.save_finished_jobs()
         self.assertEqual(fake_job_repository_update_jobs_run_count, 2)
         self.assertEqual(fake_job_repository_update_jobs_test_count, 1)
+        self.assertEqual(fake_job_activity_set_can_be_untracked_run_count, 1)
     
-    def test_remove_finished_jobs(self):
+    def test_untrack_jobs(self):
         server_service = ServerService(None, None, None, None)
         job_activity_running = FakeJobActivity()
         server_service.job_activities_assigned.append(job_activity_running)
-        server_service.remove_finished_jobs()
+        server_service.untrack_jobs()
         self.assertEqual(len(server_service.job_activities_assigned), 1)
 
         job_activity_finished = FakeJobActivity()
-        job_activity_finished.finished = True
+        job_activity_finished._can_be_untracked = True
         server_service.job_activities_assigned.append(job_activity_finished)
-        server_service.remove_finished_jobs()
+        server_service.untrack_jobs()
         self.assertEqual(len(server_service.job_activities_assigned), 1)
 
-    def test_get_enqueued_jobs(self):
+    def test_get_next_enqueued_job(self):
         server_service = ServerService(None, None, None, FakeJobRepository())
-        enqueued_jobs = server_service.get_enqueued_jobs()
-        self.assertEqual(len(enqueued_jobs), 3)
+        enqueued_job = server_service.get_next_enqueued_job()
+        self.assertIsInstance(enqueued_job, Job)
+        self.assertIsNotNone(enqueued_job)
 
     @mock.patch('hangpy.services.server_service.ServerService.set_job_start_state')
     @mock.patch('hangpy.services.server_service.ServerService.get_job_activity_instance', side_effect=get_job_activity_instance_side_effect)
