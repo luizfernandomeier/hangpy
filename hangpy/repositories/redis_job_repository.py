@@ -13,7 +13,17 @@ class RedisJobRepository(AbstractJobRepository, RedisRepositoryBase):
         keys = self._get_keys('job:*')
         serialized_jobs = self.redis_client.mget(keys)
         return self._deserialize_entries(serialized_jobs)
-    
+
+    def get_job_by_status(self, status: JobStatus):
+        status_job_key = self._get_key(f'jobstatus:*:{str(status)}')
+        if (status_job_key is None):
+            return None
+        job_key = self.redis_client.get(status_job_key)
+        if (job_key is None):
+            return None
+        serialized_job = self.redis_client.get(job_key)
+        return self._deserialize_entry(serialized_job)
+
     def get_jobs_by_status(self, status: JobStatus):
         status_job_keys = self._get_keys(f'jobstatus:*:{str(status)}')
         job_keys = self.redis_client.mget(status_job_keys)

@@ -6,6 +6,10 @@ from hangpy.enums.job_status import JobStatus
 from hangpy.repositories.redis_job_repository import RedisJobRepository
 from hangpy.services import JobActivityBase
 
+class FakeRedisTestGetNone(fakeredis.FakeStrictRedis):
+    def get(self, key):
+        return None
+
 class TestRedisJobRepository(unittest.TestCase):
 
     def test_init (self):
@@ -24,6 +28,41 @@ class TestRedisJobRepository(unittest.TestCase):
         self.assertEqual(actual_job.module_name, expected_job.module_name)
         self.assertEqual(actual_job.class_name, expected_job.class_name)
         self.assertListEqual(actual_job.parameters, expected_job.parameters)
+
+    def test_get_job_by_status(self):
+        redis_client = fakeredis.FakeStrictRedis()
+        job_repository = RedisJobRepository(redis_client)
+        fake_job = fake.FakeJob()
+        job_repository.add_job(fake_job)
+
+        actual_job = job_repository.get_job_by_status(JobStatus.ENQUEUED)
+        expected_job = fake_job.get_job_object()
+        self.assertEqual(actual_job.module_name, expected_job.module_name)
+        self.assertEqual(actual_job.class_name, expected_job.class_name)
+        self.assertListEqual(actual_job.parameters, expected_job.parameters)
+
+        job = actual_job
+        job.status = JobStatus.PROCESSING
+        job_repository.update_job(job)
+
+        actual_job = job_repository.get_job_by_status(JobStatus.ENQUEUED)
+        self.assertIsNone(actual_job)
+
+        actual_job = job_repository.get_job_by_status(JobStatus.PROCESSING)
+        expected_job = fake_job.get_job_object()
+        self.assertEqual(actual_job.module_name, expected_job.module_name)
+        self.assertEqual(actual_job.class_name, expected_job.class_name)
+        self.assertListEqual(actual_job.parameters, expected_job.parameters)
+
+        actual_job = job_repository.get_job_by_status(JobStatus.SUCCESS)
+        self.assertIsNone(actual_job)
+
+    def test_get_job_by_status_with_get_return_none(self):
+        redis_client = FakeRedisTestGetNone()
+        job_repository = RedisJobRepository(redis_client)
+        redis_client.set(F'jobstatus:ABCDE:{str(JobStatus.ENQUEUED)}', 'some_key_that_doesnt_exist')
+        actual_job = job_repository.get_job_by_status(JobStatus.ENQUEUED)
+        self.assertIsNone(actual_job)
 
     def test_get_jobs_by_status(self):
         redis_client = fakeredis.FakeStrictRedis()

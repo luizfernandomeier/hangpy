@@ -116,6 +116,20 @@ class TestJobActivityBase(TestCase):
         job_activity._started_to_run = True
         self.assertTrue(job_activity.is_finished())
 
+    def test_set_can_be_untracked(self):
+        job_activity = fake.FakeJob()
+        self.assertFalse(job_activity._can_be_untracked)
+        
+        job_activity.set_can_be_untracked()
+        self.assertTrue(job_activity._can_be_untracked)
+
+    def test_can_be_untracked(self):
+        job_activity = fake.FakeJob()
+        self.assertFalse(job_activity.can_be_untracked())
+        
+        job_activity._can_be_untracked = True
+        self.assertTrue(job_activity.can_be_untracked())
+
     @mock.patch('hangpy.services.job_activity_base.JobActivityBase.is_alive', return_value=True)
     def test_is_finished_thread_running(self, is_alive_mock):
         job_activity = fake.FakeJob()
