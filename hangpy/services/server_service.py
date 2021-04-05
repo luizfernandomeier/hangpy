@@ -37,9 +37,9 @@ class ServerService(threading.Thread):
             for job in jobs:
                 if (not self.run_enabled()):
                     break
+                self.wait_until_slot_is_open()
                 if (not self.try_set_lock_on_job(job)):
                     continue
-                self.wait_until_slot_is_open()
                 self.run_job(job)
         except Exception as err:
             self.log(f'An error ocurred during the job processing cycle: {err}')
