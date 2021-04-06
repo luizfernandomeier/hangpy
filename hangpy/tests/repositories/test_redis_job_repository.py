@@ -93,6 +93,15 @@ class TestRedisJobRepository(unittest.TestCase):
         actual_jobs = job_repository.get_jobs_by_status(JobStatus.SUCCESS)
         expected_jobs = []
         self.assertListEqual(actual_jobs, expected_jobs)
+    
+    def test_exists_jobs_with_status(self):
+        redis_client = fakeredis.FakeStrictRedis()
+        job_repository = RedisJobRepository(redis_client)
+        fake_job = fake.FakeJob()
+        job_repository.add_job(fake_job)
+
+        self.assertFalse(job_repository.exists_jobs_with_status(JobStatus.PROCESSING))
+        self.assertTrue(job_repository.exists_jobs_with_status(JobStatus.ENQUEUED))
 
     def test_update_job(self):
         redis_client = fakeredis.FakeStrictRedis()

@@ -7,6 +7,7 @@ class TestAbstractJobRepository(unittest.TestCase):
         job_repository = FakeJobRepository()
         self.assertIsNone(job_repository.get_job_by_status(None))
         self.assertIsNone(job_repository.get_jobs_by_status(None))
+        self.assertIsNone(job_repository.exists_jobs_with_status(None))
         self.assertIsNone(job_repository.add_job(None))
         self.assertIsNone(job_repository.update_job(None))
         self.assertIsNone(job_repository.update_jobs(None))
@@ -19,6 +20,9 @@ class FakeJobRepository(AbstractJobRepository):
 
     def get_jobs_by_status(self, status):
         return AbstractJobRepository.get_jobs_by_status(self, status)
+
+    def exists_jobs_with_status(self, status):
+        return AbstractJobRepository.exists_jobs_with_status(self, status)
 
     def add_job(self, job):
         return AbstractJobRepository.add_job(self, job)

@@ -11,6 +11,10 @@ class AbstractJobRepository(ABC):
         pass
 
     @abstractmethod
+    def exists_jobs_with_status(self, status):
+        pass
+
+    @abstractmethod
     def add_job(self, job):
         pass
 

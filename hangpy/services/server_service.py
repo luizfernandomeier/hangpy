@@ -19,8 +19,9 @@ class ServerService(threading.Thread):
 
     def run(self):
         while (self.run_enabled()):
-            self.run_cycle()
+            self.try_run_cycle()
             self.sleep_cycle()
+        self.wait_until_slots_are_empty()
         self.set_server_stop_state()
 
     def sleep_cycle(self):
@@ -29,30 +30,46 @@ class ServerService(threading.Thread):
     def run_enabled(self):
         return not self.stop_signal
     
-    def run_cycle(self):
+    def try_run_cycle(self):
         try:
-            self.set_server_cycle_state()
-            self.clear_finished_jobs()
-            while (True):
-                if (not self.run_enabled()):
-                    break
-                self.wait_until_slot_is_open()
-                job = self.get_next_enqueued_job()
-                if (job is None):
-                    break
-                if (not self.try_set_lock_on_job(job)):
-                    continue
-                self.run_job(job)
+            self.run_cycle()
         except Exception as err:
             self.log(f'An error ocurred during the job processing cycle: {err}')
+
+    def run_cycle(self):
+        self.set_server_cycle_state()
+        while (self.must_run_cycle_loop()):
+            self.run_cycle_loop()
+
+    def run_cycle_loop(self):
+        self.clear_finished_jobs()
+        self.wait_until_slot_is_open()
+        job = self.get_next_enqueued_job()
+        if (job is None):
+            time.sleep(0.1)
+            return
+        if (self.try_set_lock_on_job(job)):
+            self.run_job(job)
+    
+    def must_run_cycle_loop(self) -> bool:
+        run_necessity = self.exists_enqueued_jobs() or not self.slots_empty()
+        return self.run_enabled() and run_necessity
 
     def wait_until_slot_is_open(self):
         while (self.slots_limit_reached()):
             self.clear_finished_jobs()
             time.sleep(0.1)
     
+    def wait_until_slots_are_empty(self):
+        while (not self.slots_empty()):
+            self.clear_finished_jobs()
+            time.sleep(0.1)
+    
     def slots_limit_reached(self):
         return len(self.job_activities_assigned) >= self.server.slots
+    
+    def slots_empty(self):
+        return len(self.job_activities_assigned) == 0
 
     def clear_finished_jobs(self):
         self.save_finished_jobs()
@@ -67,6 +84,9 @@ class ServerService(threading.Thread):
 
     def untrack_jobs(self):
         self.job_activities_assigned = [job_activity for job_activity in self.job_activities_assigned if not job_activity.can_be_untracked()]
+
+    def exists_enqueued_jobs(self):
+        return self.job_repository.exists_jobs_with_status(JobStatus.ENQUEUED)
 
     def get_next_enqueued_job(self):
         return self.job_repository.get_job_by_status(JobStatus.ENQUEUED)
