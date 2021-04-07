@@ -1,168 +1,129 @@
-import hangpy.tests.fake as fake
 from freezegun import freeze_time
 from hangpy.entities import Job
 from hangpy.enums import JobStatus
 from hangpy.services import JobActivityBase
+from hangpy.tests.fake import FakeJobActivity
 from unittest import TestCase, mock, main
 
-def set_job_status_side_effect(*args):
-    global set_job_status_run_count
-    set_job_status_run_count += 1
+def get_fully_qualified(method_mocked: str) -> str:
+    return f'hangpy.services.job_activity_base.JobActivityBase.{method_mocked}'
 
-def set_job_error_side_effect(*args):
-    global set_job_error_run_count
-    set_job_error_run_count += 1
+def get_mock(method_mocked: str, args) -> mock.MagicMock:
+    return next(mock for mock in args if f'name=\'{method_mocked}\'' in str(mock))
 
-def set_job_end_datetime_side_effect(*args):
-    global set_job_end_datetime_run_count
-    set_job_end_datetime_run_count += 1
-
-def set_started_to_run_side_effect(*args):
-    global set_started_to_run_run_count
-    set_started_to_run_run_count += 1
+def get_call_count(method_mocked: str, args) -> int:
+    return get_mock(method_mocked, args).call_count
 
 class TestJobActivityBase(TestCase):
 
-    def setUp(self):
-        global set_job_status_run_count
-        global set_job_error_run_count
-        global set_job_end_datetime_run_count
-        global set_started_to_run_run_count
-        set_job_status_run_count = 0
-        set_job_error_run_count = 0
-        set_job_end_datetime_run_count = 0
-        set_started_to_run_run_count = 0
-
-    def tearDownClass():
-        global set_job_status_run_count
-        global set_job_error_run_count
-        global set_job_end_datetime_run_count
-        global set_started_to_run_run_count
-        del(set_job_status_run_count)
-        del(set_job_error_run_count)
-        del(set_job_end_datetime_run_count)
-        del(set_started_to_run_run_count)
-
     def test_action(self):
-        fake_abstract_job = fake.FakeAbstractJob()
-        self.assertIsNone(fake_abstract_job.action())
+        class FakeAbstractJob(JobActivityBase):
+            def action(self):
+                return JobActivityBase.action(self)
+        self.assertIsNone(FakeAbstractJob().action())
 
-    @mock.patch('hangpy.services.job_activity_base.JobActivityBase.set_job_status', side_effect=set_job_status_side_effect)
-    @mock.patch('hangpy.services.job_activity_base.JobActivityBase.set_job_error', side_effect=set_job_error_side_effect)
-    @mock.patch('hangpy.services.job_activity_base.JobActivityBase.set_job_end_datetime', side_effect=set_job_end_datetime_side_effect)
-    @mock.patch('hangpy.services.job_activity_base.JobActivityBase.set_started_to_run', side_effect=set_started_to_run_side_effect)
-    def test_start(self, set_job_status_mock, set_job_error_mock, set_job_end_datetime_mock, set_started_to_run_mock):
-        global set_job_status_run_count
-        global set_job_error_run_count
-        global set_job_end_datetime_run_count
-        global set_started_to_run_run_count
-        fake.fake_job_action_result = None
-        job_activity = fake.FakeJob()
-        job_activity.start()
-        expected = "executed the action"
-        job_activity.join()
-        self.assertEqual(fake.fake_job_action_result, expected)
-        self.assertEqual(set_job_status_run_count, 1)
-        self.assertEqual(set_job_error_run_count, 0)
-        self.assertEqual(set_job_end_datetime_run_count, 1)
-        self.assertEqual(set_started_to_run_run_count, 1)
-
-    @mock.patch('hangpy.services.job_activity_base.JobActivityBase.set_job_status', side_effect=set_job_status_side_effect)
-    @mock.patch('hangpy.services.job_activity_base.JobActivityBase.set_job_error', side_effect=set_job_error_side_effect)
-    @mock.patch('hangpy.services.job_activity_base.JobActivityBase.set_job_end_datetime', side_effect=set_job_end_datetime_side_effect)
-    @mock.patch('hangpy.services.job_activity_base.JobActivityBase.set_started_to_run', side_effect=set_started_to_run_side_effect)
-    def test_start_exception(self, set_job_status_mock, set_job_error_mock, set_job_end_datetime_mock, set_started_to_run_mock):
-        global set_job_status_run_count
-        global set_job_error_run_count
-        global set_job_end_datetime_run_count
-        job_activity = fake.FakeJobException()
+    @mock.patch(get_fully_qualified('set_job_status'))
+    @mock.patch(get_fully_qualified('set_job_error'))
+    @mock.patch(get_fully_qualified('set_job_end_datetime'))
+    @mock.patch(get_fully_qualified('set_started_to_run'))
+    def test_start(self, *args):
+        job_activity = FakeJobActivity()
+        job_activity.action = mock.MagicMock()
+        self.assertEqual(job_activity.action.call_count, 0)
         job_activity.start()
         job_activity.join()
-        self.assertEqual(set_job_status_run_count, 1)
-        self.assertEqual(set_job_error_run_count, 1)
-        self.assertEqual(set_job_end_datetime_run_count, 1)
-        self.assertEqual(set_started_to_run_run_count, 1)
+        self.assertEqual(job_activity.action.call_count, 1)
+        self.assertEqual(get_call_count('set_job_status', args), 1)
+        self.assertEqual(get_call_count('set_job_error', args), 0)
+        self.assertEqual(get_call_count('set_job_end_datetime', args), 1)
+        self.assertEqual(get_call_count('set_started_to_run', args), 1)
+
+    @mock.patch(get_fully_qualified('set_job_status'))
+    @mock.patch(get_fully_qualified('set_job_error'))
+    @mock.patch(get_fully_qualified('set_job_end_datetime'))
+    @mock.patch(get_fully_qualified('set_started_to_run'))
+    def test_start_exception(self, *args):
+        job_activity = FakeJobActivity()
+        job_activity.action = mock.MagicMock(side_effect=Exception())
+        job_activity.start()
+        job_activity.join()
+        self.assertEqual(get_call_count('set_job_status', args), 1)
+        self.assertEqual(get_call_count('set_job_error', args), 1)
+        self.assertEqual(get_call_count('set_job_end_datetime', args), 1)
+        self.assertEqual(get_call_count('set_started_to_run', args), 1)
 
     def test_get_job_object(self):
-        job_activity = fake.FakeJob()
+        job_activity = FakeJobActivity()
         job = job_activity.get_job_object()
         self.assertTrue(job.module_name.endswith('fake'))
-        self.assertEqual(job.class_name, 'FakeJob')
+        self.assertEqual(job.class_name, 'FakeJobActivity')
 
     def test_set_job(self):
-        job_activity = fake.FakeJob()
+        job_activity = FakeJobActivity()
         job = Job('some_module', 'some_class')
         job_activity.set_job(job)
         self.assertEqual(job_activity._job, job)
 
     def test_get_job(self):
-        job_activity = fake.FakeJob()
+        job_activity = FakeJobActivity()
         job = Job('some_module', 'some_class')
         job_activity._job = job
         actual_job = job_activity.get_job()
         self.assertEqual(actual_job, job)
     
     def test_set_started_to_run(self):
-        job_activity = fake.FakeJob()
+        job_activity = FakeJobActivity()
         self.assertFalse(job_activity._started_to_run)
-        
         job_activity.set_started_to_run()
         self.assertTrue(job_activity._started_to_run)
 
     def test_is_finished(self):
-        job_activity = fake.FakeJob()
+        job_activity = FakeJobActivity()
         self.assertFalse(job_activity.is_finished())
-
         job_activity._started_to_run = True
         self.assertTrue(job_activity.is_finished())
 
     def test_set_can_be_untracked(self):
-        job_activity = fake.FakeJob()
+        job_activity = FakeJobActivity()
         self.assertFalse(job_activity._can_be_untracked)
-        
         job_activity.set_can_be_untracked()
         self.assertTrue(job_activity._can_be_untracked)
 
     def test_can_be_untracked(self):
-        job_activity = fake.FakeJob()
+        job_activity = FakeJobActivity()
         self.assertFalse(job_activity.can_be_untracked())
-        
         job_activity._can_be_untracked = True
         self.assertTrue(job_activity.can_be_untracked())
 
-    @mock.patch('hangpy.services.job_activity_base.JobActivityBase.is_alive', return_value=True)
+    @mock.patch(get_fully_qualified('is_alive'), return_value=True)
     def test_is_finished_thread_running(self, is_alive_mock):
-        job_activity = fake.FakeJob()
+        job_activity = FakeJobActivity()
         self.assertFalse(job_activity.is_finished())
-
         job_activity._started_to_run = True
         self.assertFalse(job_activity.is_finished())
 
     def test_set_job_status(self):
-        job_activity = fake.FakeJob()
+        job_activity = FakeJobActivity()
         job = Job('some_module', 'some_class')
         job_activity.set_job(job)
         self.assertEqual(job_activity._job.status, JobStatus.ENQUEUED)
-
         job_activity.set_job_status(JobStatus.PROCESSING)
         self.assertEqual(job_activity._job.status, JobStatus.PROCESSING)
     
     def test_set_job_error(self):
-        job_activity = fake.FakeJob()
+        job_activity = FakeJobActivity()
         job = Job('some_module', 'some_class')
         job_activity.set_job(job)
         self.assertIsNone(job_activity._job.error)
-
         job_activity.set_job_error(Exception('some exception message'))
         self.assertEqual(job_activity._job.error, 'some exception message')
 
     @freeze_time('1988-04-10 11:01:02.123456')
     def test_set_job_end_datetime(self):
-        job_activity = fake.FakeJob()
+        job_activity = FakeJobActivity()
         job = Job('some_module', 'some_class')
         job_activity.set_job(job)
         self.assertIsNone(job_activity._job.end_datetime)
-
         job_activity.set_job_end_datetime()
         self.assertEqual(job_activity._job.end_datetime, '1988-04-10T11:01:02.123456')
 

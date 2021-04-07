@@ -4,65 +4,8 @@ from freezegun import freeze_time
 from hangpy.dtos import ServerConfigurationDto
 from hangpy.entities import Job, Server
 from hangpy.enums import JobStatus
-from hangpy.services import ServerService
+from hangpy.services import JobActivityBase, ServerService
 from unittest import TestCase, mock, main
-
-class FakeJobRepository:   
-    def get_job_by_status(self, status):
-        return get_fake_job()
-    
-    def update_job(self, job):
-        global fake_job_repository_update_job_run_count
-        fake_job_repository_update_job_run_count += 1
-    
-    def update_jobs(self, jobs):
-        global fake_job_repository_update_jobs_run_count
-        global fake_job_repository_update_jobs_test_count
-        fake_job_repository_update_jobs_run_count += 1
-        fake_job_repository_update_jobs_test_count += len(jobs)
-    
-    set_lock_return = True
-    def try_set_lock_on_job(self, job):
-        return self.set_lock_return
-
-class FakeServerRepository:
-    def update_server(self, server):
-        global fake_server_repository_update_server_run_count
-        fake_server_repository_update_server_run_count += 1
-
-class FakeJobActivity:
-
-    def __init__(self):
-        self._finished = False
-        self._can_be_untracked = False
-
-    def start(self):
-        global fake_job_activity_start_run_count
-        fake_job_activity_start_run_count += 1
-    
-    def set_job(self, job):
-        global fake_job_activity_set_job_run_count
-        fake_job_activity_set_job_run_count += 1
-    
-    def get_job(self):
-        return get_fake_job()
-    
-    def is_finished(self):
-        return self._finished
-
-    def set_can_be_untracked(self):
-        global fake_job_activity_set_can_be_untracked_run_count
-        fake_job_activity_set_can_be_untracked_run_count += 1
-        self._can_be_untracked = True
-    
-    def can_be_untracked(self):
-        return self._can_be_untracked
-
-class FakeJobActivityException:
-    def start(self):
-        global fake_job_activity_exception_start_run_count
-        fake_job_activity_exception_start_run_count += 1
-        raise Exception('FakeJobActivityException exception')
 
 def get_fully_qualified(method_mocked: str) -> str:
     return f'hangpy.services.server_service.ServerService.{method_mocked}'
@@ -76,53 +19,14 @@ def get_call_count(method_mocked: str, args) -> int:
 def get_fake_job() -> Job:
     return Job('module_test', 'class_test')
 
-def print_side_effect(*args):
-    global print_message_test
-    print_message_test = args[0]
+class FakeJobActivity(JobActivityBase):
+    def __init__(self):
+        self.set_job = mock.MagicMock()
+        JobActivityBase.__init__(self)
+    def action(self):
+        pass
 
 class TestServerService(TestCase):
-
-    def setUp(self):
-        global fake_job_activity_start_run_count
-        global fake_job_activity_set_job_run_count
-        global fake_job_activity_set_can_be_untracked_run_count
-        global fake_job_activity_exception_start_run_count
-        global fake_server_repository_update_server_run_count
-        global fake_job_repository_update_job_run_count
-        global fake_job_repository_update_jobs_run_count
-        global fake_job_repository_update_jobs_test_count
-        global print_message_test
-
-        fake_job_activity_start_run_count = 0
-        fake_job_activity_set_job_run_count = 0
-        fake_job_activity_set_can_be_untracked_run_count = 0
-        fake_job_activity_exception_start_run_count = 0
-        fake_server_repository_update_server_run_count = 0
-        fake_job_repository_update_job_run_count = 0
-        fake_job_repository_update_jobs_run_count = 0
-        fake_job_repository_update_jobs_test_count = 0
-        print_message_test = None
-
-    def tearDownClass():
-        global fake_job_activity_start_run_count
-        global fake_job_activity_set_job_run_count
-        global fake_job_activity_set_can_be_untracked_run_count
-        global fake_job_activity_exception_start_run_count
-        global fake_server_repository_update_server_run_count
-        global fake_job_repository_update_job_run_count
-        global fake_job_repository_update_jobs_run_count
-        global fake_job_repository_update_jobs_test_count
-        global print_message_test
-
-        del(fake_job_activity_start_run_count)
-        del(fake_job_activity_set_job_run_count)
-        del(fake_job_activity_set_can_be_untracked_run_count)
-        del(fake_job_activity_exception_start_run_count)
-        del(fake_server_repository_update_server_run_count)
-        del(fake_job_repository_update_job_run_count)
-        del(fake_job_repository_update_jobs_run_count)
-        del(fake_job_repository_update_jobs_test_count)
-        del(print_message_test)
 
     @mock.patch(get_fully_qualified('run_enabled'), side_effect=[True, True, False])
     @mock.patch(get_fully_qualified('try_run_cycle'))
@@ -254,7 +158,7 @@ class TestServerService(TestCase):
     def test_slots_limit_reached(self):
         server = Server(2)
         server_service = ServerService(server, None, None, None)
-        job_activity = FakeJobActivity()
+        job_activity = mock.MagicMock(spec=JobActivityBase)
         server_service.job_activities_assigned.append(job_activity)
         self.assertFalse(server_service.slots_limit_reached())
         server_service.job_activities_assigned.append(job_activity)
@@ -267,7 +171,7 @@ class TestServerService(TestCase):
     def test_slots_empty(self):
         server = Server(2)
         server_service = ServerService(server, None, None, None)
-        job_activity = FakeJobActivity()
+        job_activity = mock.MagicMock(spec=JobActivityBase)
         server_service.job_activities_assigned.append(job_activity)
         self.assertFalse(server_service.slots_empty())
         server_service.job_activities_assigned.clear()
@@ -282,83 +186,105 @@ class TestServerService(TestCase):
         self.assertEqual(get_call_count('untrack_jobs', args), 1)
 
     def test_save_finished_jobs(self):
-        global fake_job_repository_update_jobs_run_count
-        global fake_job_activity_set_can_be_untracked_run_count
-        server_service = ServerService(None, None, None, FakeJobRepository())
-        job_activity_running = FakeJobActivity()
+        jobs_updated = 0
+        def fake_update_jobs(jobs):
+            nonlocal jobs_updated
+            jobs_updated += len(jobs)
+        fake_job_repository = types.SimpleNamespace()
+        fake_job_repository.update_jobs = mock.MagicMock(side_effect=fake_update_jobs)
+        server_service = ServerService(None, None, None, fake_job_repository)
+        job_activity_running = types.SimpleNamespace()
+        job_activity_running.is_finished = mock.MagicMock(return_value=False)
+        job_activity_running.get_job = mock.MagicMock(return_value=get_fake_job())
+        job_activity_running.set_can_be_untracked = mock.MagicMock()
         server_service.job_activities_assigned.append(job_activity_running)
         server_service.save_finished_jobs()
-        self.assertEqual(fake_job_repository_update_jobs_run_count, 1)
-        self.assertEqual(fake_job_repository_update_jobs_test_count, 0)
+        self.assertEqual(fake_job_repository.update_jobs.call_count, 1)
+        self.assertEqual(jobs_updated, 0)
+        self.assertEqual(job_activity_running.set_can_be_untracked.call_count, 0)
 
-        job_activity_finished = FakeJobActivity()
-        job_activity_finished._finished = True
+        job_activity_finished = types.SimpleNamespace()
+        job_activity_finished.is_finished = mock.MagicMock(return_value=True)
+        job_activity_finished.get_job = mock.MagicMock(return_value=get_fake_job())
+        job_activity_finished.set_can_be_untracked = mock.MagicMock()
         server_service.job_activities_assigned.append(job_activity_finished)
         server_service.save_finished_jobs()
-        self.assertEqual(fake_job_repository_update_jobs_run_count, 2)
-        self.assertEqual(fake_job_repository_update_jobs_test_count, 1)
-        self.assertEqual(fake_job_activity_set_can_be_untracked_run_count, 1)
+        self.assertEqual(fake_job_repository.update_jobs.call_count, 2)
+        self.assertEqual(jobs_updated, 1)
+        self.assertEqual(job_activity_finished.set_can_be_untracked.call_count, 1)
     
     def test_untrack_jobs(self):
         server_service = ServerService(None, None, None, None)
-        job_activity_running = FakeJobActivity()
+        job_activity_running = types.SimpleNamespace()
+        job_activity_running.can_be_untracked = mock.MagicMock(return_value=False)
         server_service.job_activities_assigned.append(job_activity_running)
+        self.assertEqual(len(server_service.job_activities_assigned), 1)
         server_service.untrack_jobs()
         self.assertEqual(len(server_service.job_activities_assigned), 1)
 
-        job_activity_finished = FakeJobActivity()
-        job_activity_finished._can_be_untracked = True
+        job_activity_finished = types.SimpleNamespace()
+        job_activity_finished.can_be_untracked = mock.MagicMock(return_value=True)
         server_service.job_activities_assigned.append(job_activity_finished)
+        self.assertEqual(len(server_service.job_activities_assigned), 2)
         server_service.untrack_jobs()
         self.assertEqual(len(server_service.job_activities_assigned), 1)
 
     def test_exists_enqueued_jobs(self):
-        mock_repository = types.SimpleNamespace()
-        mock_repository.exists_jobs_with_status = mock.MagicMock(side_effect=[True, False])
-        server_service = ServerService(None, None, None, mock_repository)
+        fake_job_repository = types.SimpleNamespace()
+        fake_job_repository.exists_jobs_with_status = mock.MagicMock(side_effect=[True, False])
+        server_service = ServerService(None, None, None, fake_job_repository)
         self.assertTrue(server_service.exists_enqueued_jobs())
         self.assertFalse(server_service.exists_enqueued_jobs())
 
     def test_get_next_enqueued_job(self):
-        server_service = ServerService(None, None, None, FakeJobRepository())
+        fake_job_repository = types.SimpleNamespace()
+        fake_job_repository.get_job_by_status = mock.MagicMock(return_value=get_fake_job())
+        server_service = ServerService(None, None, None, fake_job_repository)
         enqueued_job = server_service.get_next_enqueued_job()
         self.assertIsNotNone(enqueued_job)
         self.assertIsInstance(enqueued_job, Job)
 
     @mock.patch(get_fully_qualified('set_job_start_state'))
     @mock.patch(get_fully_qualified('log'))
-    @mock.patch(get_fully_qualified('get_job_activity_instance'), return_value=FakeJobActivity())
+    @mock.patch(get_fully_qualified('get_job_activity_instance'))
     @mock.patch(get_fully_qualified('add_job_activity_assigned'))
+    @mock.patch(get_fully_qualified('run_job_instance'))
     def test_run_job(self, *args):
-        global fake_job_activity_start_run_count
         server_service = ServerService(None, None, None, None)
         job = get_fake_job()
         server_service.run_job(job)
         self.assertEqual(get_call_count('set_job_start_state', args), 1)
         self.assertEqual(get_call_count('get_job_activity_instance', args), 1)
         self.assertEqual(get_call_count('add_job_activity_assigned', args), 1)
-        self.assertEqual(fake_job_activity_start_run_count, 1)
+        self.assertEqual(get_call_count('run_job_instance', args), 1)
 
     @mock.patch(get_fully_qualified('set_job_start_state'))
     @mock.patch(get_fully_qualified('log'))
-    @mock.patch(get_fully_qualified('get_job_activity_instance'), return_value=FakeJobActivityException())
+    @mock.patch(get_fully_qualified('get_job_activity_instance'))
     @mock.patch(get_fully_qualified('add_job_activity_assigned'))
+    @mock.patch(get_fully_qualified('run_job_instance'), side_effect=Exception('run_job_instance exception'))
     def test_run_job_exception(self, *args):
-        global fake_job_activity_exception_start_run_count
         server_service = ServerService(None, None, None, None)
         job = get_fake_job()
         server_service.run_job(job)
         self.assertEqual(get_call_count('set_job_start_state', args), 1)
         self.assertEqual(get_call_count('get_job_activity_instance', args), 1)
         self.assertEqual(get_call_count('add_job_activity_assigned', args), 1)
-        self.assertEqual(fake_job_activity_exception_start_run_count, 1)
+        self.assertEqual(get_call_count('run_job_instance', args), 1)
         actual_log = str(get_mock('log', args).call_args[0][0])
-        self.assertTrue(actual_log.endswith('FakeJobActivityException exception'))
-        pass
+        self.assertTrue(actual_log.endswith('run_job_instance exception'))
+
+    def test_run_job_instance(self):
+        server_service = ServerService(None, None, None, None)
+        job_activity = mock.MagicMock(spec=JobActivityBase)
+        job_activity.start = mock.MagicMock()
+        self.assertEqual(job_activity.start.call_count, 0)
+        server_service.run_job_instance(job_activity)
+        self.assertEqual(job_activity.start.call_count, 1)
 
     def test_add_job_activity_assigned(self):
         server_service = ServerService(None, None, None, None)
-        job_activity = FakeJobActivity()
+        job_activity = types.SimpleNamespace()
         self.assertEqual(len(server_service.job_activities_assigned), 0)
         server_service.add_job_activity_assigned(job_activity)
         self.assertEqual(len(server_service.job_activities_assigned), 1)
@@ -366,58 +292,58 @@ class TestServerService(TestCase):
         self.assertEqual(len(server_service.job_activities_assigned), 2)
 
     def test_get_job_activity_instance(self):
-        global fake_job_activity_set_job_run_count
         server_service = ServerService(None, None, None, None)
-        job = Job(FakeJobActivity().__module__, FakeJobActivity().__class__.__name__)
+        fake_job_activity = FakeJobActivity()
+        job = Job(fake_job_activity.__module__, fake_job_activity.__class__.__name__)
         job_instance = server_service.get_job_activity_instance(job)
         self.assertIsInstance(job_instance, FakeJobActivity)
-        self.assertEqual(fake_job_activity_set_job_run_count, 1)
+        self.assertEqual(job_instance.set_job.call_count, 1)
 
     @freeze_time('1988-04-10 11:01:02.123456')
     def test_set_server_cycle_state(self):
-        global fake_server_repository_update_server_run_count
         server = Server()
-        server_service = ServerService(server, None, FakeServerRepository(), None)
+        fake_server_repository = types.SimpleNamespace()
+        fake_server_repository.update_server = mock.MagicMock()
+        server_service = ServerService(server, None, fake_server_repository, None)
         server_service.set_server_cycle_state()
         self.assertEqual(server.last_cycle_datetime, '1988-04-10T11:01:02.123456')
-        self.assertEqual(fake_server_repository_update_server_run_count, 1)
+        self.assertEqual(fake_server_repository.update_server.call_count, 1)
 
     @freeze_time('1988-04-10 11:01:02.123456')
     def test_set_server_stop_state(self):
-        global fake_server_repository_update_server_run_count
         server = Server()
-        server_service = ServerService(server, None, FakeServerRepository(), None)
+        fake_server_repository = types.SimpleNamespace()
+        fake_server_repository.update_server = mock.MagicMock()
+        server_service = ServerService(server, None, fake_server_repository, None)
         server_service.set_server_stop_state()
         self.assertEqual(server.stop_datetime, '1988-04-10T11:01:02.123456')
-        self.assertEqual(fake_server_repository_update_server_run_count, 1)
+        self.assertEqual(fake_server_repository.update_server.call_count, 1)
 
     @freeze_time('1988-04-10 11:01:02.123456')
     def test_set_job_start_state(self):
-        global fake_job_repository_update_job_run_count
+        fake_job_repository = types.SimpleNamespace()
+        fake_job_repository.update_job = mock.MagicMock()
         job = get_fake_job()
-        server_service = ServerService(None, None, None, FakeJobRepository())
+        server_service = ServerService(None, None, None, fake_job_repository)
         server_service.set_job_start_state(job)
         self.assertEqual(job.start_datetime, '1988-04-10T11:01:02.123456')
         self.assertEqual(job.status, JobStatus.PROCESSING)
-        self.assertEqual(fake_job_repository_update_job_run_count, 1)
+        self.assertEqual(fake_job_repository.update_job.call_count, 1)
 
     def test_try_set_lock_on_job(self):
-        job_repository = FakeJobRepository()
-        server_service = ServerService(None, None, None, job_repository)
+        fake_job_repository = types.SimpleNamespace()
+        fake_job_repository.try_set_lock_on_job = mock.MagicMock(side_effect=[True, False])
+        server_service = ServerService(None, None, None, fake_job_repository)
         job = get_fake_job()
-        job_repository.set_lock_return = True
-        locked = server_service.try_set_lock_on_job(job)
-        self.assertTrue(locked)
-        job_repository.set_lock_return = False
-        locked = server_service.try_set_lock_on_job(job)
-        self.assertFalse(locked)
+        self.assertTrue(server_service.try_set_lock_on_job(job))
+        self.assertFalse(server_service.try_set_lock_on_job(job))
 
-    @mock.patch('builtins.print', side_effect=print_side_effect)
-    def test_log(self, print_mock):
-        global print_message_test
+    @mock.patch('builtins.print')
+    def test_log(self, *args):
         server_service = ServerService(None, None, None, None)
         server_service.log('some log message')
-        self.assertEqual(print_message_test, 'some log message')
+        actual_print = str(get_mock('print', args).call_args[0][0])
+        self.assertEqual(actual_print, 'some log message')
 
 if (__name__ == "__main__"):
     main()
