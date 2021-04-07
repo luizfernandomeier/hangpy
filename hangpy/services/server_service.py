@@ -97,9 +97,12 @@ class ServerService(threading.Thread):
             self.log(f'\nProcessing job: {job.id}')
             job_activity_instance = self.get_job_activity_instance(job)
             self.add_job_activity_assigned(job_activity_instance)
-            job_activity_instance.start()
+            self.run_job_instance(job_activity_instance)
         except Exception as err:
             self.log(f'Error: {err}')
+
+    def run_job_instance(self, job_activity_instance: JobActivityBase):
+        job_activity_instance.start()
 
     def add_job_activity_assigned(self, job_activity_instance: JobActivityBase):
         self.job_activities_assigned.append(job_activity_instance)
