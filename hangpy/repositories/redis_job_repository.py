@@ -4,6 +4,7 @@ from hangpy.repositories import RedisRepositoryBase
 from hangpy.repositories import AbstractJobRepository
 from hangpy.services import JobActivityBase
 
+
 class RedisJobRepository(AbstractJobRepository, RedisRepositoryBase):
 
     def __init__(self, redis_client):
@@ -43,11 +44,11 @@ class RedisJobRepository(AbstractJobRepository, RedisRepositoryBase):
 
     def update_job(self, job: Job):
         self.__set_job(job)
-    
+
     def update_jobs(self, jobs: list[Job]):
         for job in jobs:
             self.update_job(job)
-    
+
     def try_set_lock_on_job(self, job: Job):
         return self.redis_client.setnx(f'lock:job:{job.id}', 1)
 

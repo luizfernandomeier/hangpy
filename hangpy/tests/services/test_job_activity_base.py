@@ -5,14 +5,18 @@ from hangpy.services import JobActivityBase
 from hangpy.tests.fake import FakeJobActivity
 from unittest import TestCase, mock, main
 
+
 def get_fully_qualified(method_mocked: str) -> str:
     return f'hangpy.services.job_activity_base.JobActivityBase.{method_mocked}'
+
 
 def get_mock(method_mocked: str, args) -> mock.MagicMock:
     return next(mock for mock in args if f'name=\'{method_mocked}\'' in str(mock))
 
+
 def get_call_count(method_mocked: str, args) -> int:
     return get_mock(method_mocked, args).call_count
+
 
 class TestJobActivityBase(TestCase):
 
@@ -70,7 +74,7 @@ class TestJobActivityBase(TestCase):
         job_activity._job = job
         actual_job = job_activity.get_job()
         self.assertEqual(actual_job, job)
-    
+
     def test_set_started_to_run(self):
         job_activity = FakeJobActivity()
         self.assertFalse(job_activity._started_to_run)
@@ -109,7 +113,7 @@ class TestJobActivityBase(TestCase):
         self.assertEqual(job_activity._job.status, JobStatus.ENQUEUED)
         job_activity.set_job_status(JobStatus.PROCESSING)
         self.assertEqual(job_activity._job.status, JobStatus.PROCESSING)
-    
+
     def test_set_job_error(self):
         job_activity = FakeJobActivity()
         job = Job('some_module', 'some_class')
@@ -126,6 +130,7 @@ class TestJobActivityBase(TestCase):
         self.assertIsNone(job_activity._job.end_datetime)
         job_activity.set_job_end_datetime()
         self.assertEqual(job_activity._job.end_datetime, '1988-04-10T11:01:02.123456')
+
 
 if (__name__ == "__main__"):
     main()

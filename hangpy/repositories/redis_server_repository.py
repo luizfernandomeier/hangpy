@@ -1,6 +1,7 @@
 from hangpy.repositories import RedisRepositoryBase
 from hangpy.repositories import AbstractServerRepository
 
+
 class RedisServerRepository(AbstractServerRepository, RedisRepositoryBase):
 
     def __init__(self, redis_client):
@@ -10,7 +11,7 @@ class RedisServerRepository(AbstractServerRepository, RedisRepositoryBase):
         keys = self._get_keys('server.*')
         serialized_servers = self.redis_client.mget(keys)
         return self._deserialize_entries(serialized_servers)
-    
+
     def add_server(self, server):
         self.__set_server(server)
 

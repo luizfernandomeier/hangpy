@@ -2,6 +2,7 @@ import datetime
 import uuid
 from hangpy.enums import JobStatus
 
+
 class Job():
 
     def __init__(self, module_name: str = '', class_name: str = '', parameters: list = None):

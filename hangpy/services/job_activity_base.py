@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from hangpy.entities import Job
 from hangpy.enums import JobStatus
 
+
 class JobActivityBase(ABC, threading.Thread):
 
     def __init__(self):
@@ -24,13 +25,13 @@ class JobActivityBase(ABC, threading.Thread):
 
     def set_started_to_run(self):
         self._started_to_run = True
-    
+
     def is_finished(self):
         return self._started_to_run and not self.is_alive()
-    
+
     def set_can_be_untracked(self):
         self._can_be_untracked = True
-    
+
     def can_be_untracked(self):
         return self._can_be_untracked
 
@@ -39,7 +40,7 @@ class JobActivityBase(ABC, threading.Thread):
 
     def set_job_error(self, err: Exception):
         self._job.error = str(err)
-    
+
     def set_job_end_datetime(self):
         self._job.end_datetime = datetime.datetime.now().isoformat()
 
@@ -52,7 +53,7 @@ class JobActivityBase(ABC, threading.Thread):
             self.set_job_status(JobStatus.ERROR)
             self.set_job_error(err)
         self.set_job_end_datetime()
-    
+
     def get_job_object(self):
         module_name = self.__module__
         class_name = self.__class__.__name__

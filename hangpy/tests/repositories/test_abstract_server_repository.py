@@ -1,6 +1,7 @@
 import unittest
 from hangpy.repositories import AbstractServerRepository
 
+
 class TestAbstractServerRepository(unittest.TestCase):
 
     def test_instantiate(self):
@@ -9,8 +10,9 @@ class TestAbstractServerRepository(unittest.TestCase):
         self.assertIsNone(server_repository.add_server(None))
         self.assertIsNone(server_repository.update_server(None))
 
+
 class FakeServerRepository(AbstractServerRepository):
-    
+
     def get_servers(self):
         return AbstractServerRepository.get_servers(self)
 
@@ -19,6 +21,7 @@ class FakeServerRepository(AbstractServerRepository):
 
     def update_server(self, server):
         return AbstractServerRepository.update_server(self, server)
+
 
 if (__name__ == "__main__"):
     unittest.main()

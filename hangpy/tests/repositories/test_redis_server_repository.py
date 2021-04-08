@@ -6,9 +6,10 @@ from freezegun import freeze_time
 from hangpy.entities.server import Server
 from hangpy.repositories.redis_server_repository import RedisServerRepository
 
+
 class TestRedisServerRepository(unittest.TestCase):
 
-    def test_init (self):
+    def test_init(self):
         redis_client = fakeredis.FakeStrictRedis()
         server_repository = RedisServerRepository(redis_client)
         self.assertIsInstance(server_repository.redis_client, redis.StrictRedis)
@@ -38,6 +39,7 @@ class TestRedisServerRepository(unittest.TestCase):
         actual_server = server_repository.get_servers()[0]
 
         self.assertEqual(actual_server.last_cycle_datetime, server.last_cycle_datetime)
+
 
 if (__name__ == '__main__'):
     unittest.main()
