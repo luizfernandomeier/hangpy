@@ -1,5 +1,6 @@
 import jsonpickle
 
+
 class RedisRepositoryBase():
 
     def __init__(self, redis_client):

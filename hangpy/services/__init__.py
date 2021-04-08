@@ -1,2 +1,2 @@
-from hangpy.services.job_activity_base import JobActivityBase
-from hangpy.services.server_service import ServerService
+from hangpy.services.job_activity_base import JobActivityBase # noqa F401
+from hangpy.services.server_service import ServerService # noqa F401

@@ -1,7 +1,7 @@
-import datetime
 import unittest
 from freezegun import freeze_time
 from hangpy.entities import Server
+
 
 class TestServer(unittest.TestCase):
 
@@ -12,9 +12,10 @@ class TestServer(unittest.TestCase):
         self.assertEqual(server.stop_datetime, None)
         self.assertEqual(server.last_cycle_datetime, None)
         self.assertEqual(server.slots, 10)
-        
+
         server = Server(5)
         self.assertEqual(server.slots, 5)
+
 
 if (__name__ == "__main__"):
     unittest.main()

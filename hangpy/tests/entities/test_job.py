@@ -1,8 +1,8 @@
-import datetime
 import unittest
 from freezegun import freeze_time
 from hangpy.entities import Job
 from hangpy.enums import JobStatus
+
 
 class TestJob(unittest.TestCase):
 
@@ -47,6 +47,7 @@ class TestJob(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             job = Job('module1', 'class2', range(10))
+
 
 if (__name__ == "__main__"):
     unittest.main()

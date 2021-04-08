@@ -4,15 +4,16 @@ import redis
 import unittest
 from hangpy.enums.job_status import JobStatus
 from hangpy.repositories.redis_job_repository import RedisJobRepository
-from hangpy.services import JobActivityBase
+
 
 class FakeRedisTestGetNone(fakeredis.FakeStrictRedis):
     def get(self, key):
         return None
 
+
 class TestRedisJobRepository(unittest.TestCase):
 
-    def test_init (self):
+    def test_init(self):
         redis_client = fakeredis.FakeStrictRedis()
         job_repository = RedisJobRepository(redis_client)
         self.assertIsInstance(job_repository.redis_client, redis.StrictRedis)
@@ -93,7 +94,7 @@ class TestRedisJobRepository(unittest.TestCase):
         actual_jobs = job_repository.get_jobs_by_status(JobStatus.SUCCESS)
         expected_jobs = []
         self.assertListEqual(actual_jobs, expected_jobs)
-    
+
     def test_exists_jobs_with_status(self):
         redis_client = fakeredis.FakeStrictRedis()
         job_repository = RedisJobRepository(redis_client)
@@ -114,7 +115,7 @@ class TestRedisJobRepository(unittest.TestCase):
         actual_job = job_repository.get_jobs()[0]
         self.assertListEqual(actual_job.parameters, ['luiz'])
         self.assertEqual(actual_job.status, JobStatus.ERROR)
-    
+
     def test_update_jobs(self):
         redis_client = fakeredis.FakeStrictRedis()
         job_repository = RedisJobRepository(redis_client)
@@ -157,6 +158,7 @@ class TestRedisJobRepository(unittest.TestCase):
 
         actual_lock_set = job_repository.try_set_lock_on_job(jobs[1])
         self.assertFalse(actual_lock_set)
+
 
 if (__name__ == '__main__'):
     unittest.main()

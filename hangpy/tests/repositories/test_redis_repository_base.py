@@ -1,7 +1,7 @@
 import fakeredis
 import unittest
-from unittest import mock
 from hangpy.repositories import RedisRepositoryBase
+
 
 class TestRedisRepositoryBase(unittest.TestCase):
 
@@ -17,7 +17,7 @@ class TestRedisRepositoryBase(unittest.TestCase):
         self.assertIsNone(actual_key)
 
         redis_client.flushall()
-        actual_keys = repository_base._get_key('*')
+        actual_key = repository_base._get_key('*')
         self.assertIsNone(actual_key)
 
     def test_get_keys(self):
@@ -38,7 +38,7 @@ class TestRedisRepositoryBase(unittest.TestCase):
         actual_keys = [key.decode() for key in repository_base._get_keys('*')]
         expected_keys = []
         self.assertListEqual(actual_keys, expected_keys)
-    
+
     def test_serialize_entry(self):
         redis_client = fakeredis.FakeStrictRedis()
         repository_base = RedisRepositoryBase(redis_client)
@@ -65,16 +65,18 @@ class TestRedisRepositoryBase(unittest.TestCase):
         expected_object = fake_object
         self.assertEqual(actual_object, expected_object)
 
+
 class FakeClass():
 
     def __init__(self, property1, property2):
         self.property1 = property1
         self.property2 = property2
-    
+
     def __eq__(self, other):
         return (isinstance(other, FakeClass)
-            and self.property1 == other.property1
-            and self.property2 == other.property2)
+                and self.property1 == other.property1
+                and self.property2 == other.property2)
+
 
 if (__name__ == "__main__"):
     unittest.main()

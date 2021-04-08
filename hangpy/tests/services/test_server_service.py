@@ -7,24 +7,32 @@ from hangpy.enums import JobStatus
 from hangpy.services import JobActivityBase, ServerService
 from unittest import TestCase, mock, main
 
+
 def get_fully_qualified(method_mocked: str) -> str:
     return f'hangpy.services.server_service.ServerService.{method_mocked}'
+
 
 def get_mock(method_mocked: str, args) -> mock.MagicMock:
     return next(mock for mock in args if f'name=\'{method_mocked}\'' in str(mock))
 
+
 def get_call_count(method_mocked: str, args) -> int:
     return get_mock(method_mocked, args).call_count
+
 
 def get_fake_job() -> Job:
     return Job('module_test', 'class_test')
 
+
 class FakeJobActivity(JobActivityBase):
+
     def __init__(self):
         self.set_job = mock.MagicMock()
         JobActivityBase.__init__(self)
+
     def action(self):
         pass
+
 
 class TestServerService(TestCase):
 
@@ -72,7 +80,7 @@ class TestServerService(TestCase):
         server_service.try_run_cycle()
         actual_log = str(get_mock('log', args).call_args[0][0])
         self.assertTrue(actual_log.endswith('run_cycle exception'))
-    
+
     @mock.patch(get_fully_qualified('set_server_cycle_state'))
     @mock.patch(get_fully_qualified('must_run_cycle_loop'), side_effect=[True, False])
     @mock.patch(get_fully_qualified('run_cycle_loop'))
@@ -124,7 +132,7 @@ class TestServerService(TestCase):
         self.assertEqual(get_call_count('get_next_enqueued_job', args), 1)
         self.assertEqual(get_call_count('try_set_lock_on_job', args), 1)
         self.assertEqual(get_call_count('run_job', args), 0)
-    
+
     @mock.patch(get_fully_qualified('exists_enqueued_jobs'), side_effect=[False, False, False, False, True, True, True, True])
     @mock.patch(get_fully_qualified('slots_empty'), side_effect=[False, False, True, True, False, False, True, True])
     @mock.patch(get_fully_qualified('run_enabled'), side_effect=[False, True, False, True, False, True, False, True])
@@ -146,7 +154,7 @@ class TestServerService(TestCase):
         server_service.wait_until_slot_is_open()
         self.assertEqual(get_call_count('slots_limit_reached', args), 2)
         self.assertEqual(get_call_count('clear_finished_jobs', args), 1)
-    
+
     @mock.patch(get_fully_qualified('slots_empty'), side_effect=[False, True])
     @mock.patch(get_fully_qualified('clear_finished_jobs'))
     def test_wait_until_slots_are_empty(self, *args):
@@ -187,9 +195,11 @@ class TestServerService(TestCase):
 
     def test_save_finished_jobs(self):
         jobs_updated = 0
+
         def fake_update_jobs(jobs):
             nonlocal jobs_updated
             jobs_updated += len(jobs)
+
         fake_job_repository = types.SimpleNamespace()
         fake_job_repository.update_jobs = mock.MagicMock(side_effect=fake_update_jobs)
         server_service = ServerService(None, None, None, fake_job_repository)
@@ -212,7 +222,7 @@ class TestServerService(TestCase):
         self.assertEqual(fake_job_repository.update_jobs.call_count, 2)
         self.assertEqual(jobs_updated, 1)
         self.assertEqual(job_activity_finished.set_can_be_untracked.call_count, 1)
-    
+
     def test_untrack_jobs(self):
         server_service = ServerService(None, None, None, None)
         job_activity_running = types.SimpleNamespace()
@@ -344,6 +354,7 @@ class TestServerService(TestCase):
         server_service.log('some log message')
         actual_print = str(get_mock('print', args).call_args[0][0])
         self.assertEqual(actual_print, 'some log message')
+
 
 if (__name__ == "__main__"):
     main()

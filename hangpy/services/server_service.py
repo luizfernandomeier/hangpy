@@ -6,8 +6,9 @@ from hangpy.entities import Job
 from hangpy.enums import JobStatus
 from hangpy.services import JobActivityBase
 
+
 class ServerService(threading.Thread):
-    
+
     def __init__(self, server, server_configuration, server_repository, job_repository):
         self.stop_signal = False
         self.server = server
@@ -26,10 +27,10 @@ class ServerService(threading.Thread):
 
     def sleep_cycle(self):
         time.sleep(self.server_configuration.cycle_interval_milliseconds / 1000)
-    
+
     def run_enabled(self):
         return not self.stop_signal
-    
+
     def try_run_cycle(self):
         try:
             self.run_cycle()
@@ -50,7 +51,7 @@ class ServerService(threading.Thread):
             return
         if (self.try_set_lock_on_job(job)):
             self.run_job(job)
-    
+
     def must_run_cycle_loop(self) -> bool:
         run_necessity = self.exists_enqueued_jobs() or not self.slots_empty()
         return self.run_enabled() and run_necessity
@@ -59,21 +60,21 @@ class ServerService(threading.Thread):
         while (self.slots_limit_reached()):
             self.clear_finished_jobs()
             time.sleep(0.1)
-    
+
     def wait_until_slots_are_empty(self):
         while (not self.slots_empty()):
             self.clear_finished_jobs()
             time.sleep(0.1)
-    
+
     def slots_limit_reached(self):
         return len(self.job_activities_assigned) >= self.server.slots
-    
+
     def slots_empty(self):
         return len(self.job_activities_assigned) == 0
 
     def clear_finished_jobs(self):
         self.save_finished_jobs()
-        self.untrack_jobs()        
+        self.untrack_jobs()
 
     def save_finished_jobs(self):
         finished_activities = [job_activity for job_activity in self.job_activities_assigned if job_activity.is_finished()]
@@ -83,7 +84,8 @@ class ServerService(threading.Thread):
             job_activity.set_can_be_untracked()
 
     def untrack_jobs(self):
-        self.job_activities_assigned = [job_activity for job_activity in self.job_activities_assigned if not job_activity.can_be_untracked()]
+        self.job_activities_assigned = [job_activity for job_activity in self.job_activities_assigned
+                                        if not job_activity.can_be_untracked()]
 
     def exists_enqueued_jobs(self):
         return self.job_repository.exists_jobs_with_status(JobStatus.ENQUEUED)
@@ -126,7 +128,7 @@ class ServerService(threading.Thread):
         job.start_datetime = datetime.datetime.now().isoformat()
         job.status = JobStatus.PROCESSING
         self.job_repository.update_job(job)
-    
+
     def try_set_lock_on_job(self, job: Job):
         return self.job_repository.try_set_lock_on_job(job)
 
