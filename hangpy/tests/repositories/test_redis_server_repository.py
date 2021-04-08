@@ -3,6 +3,7 @@ import fakeredis
 import redis
 import unittest
 from freezegun import freeze_time
+from hangpy.dtos import ServerConfigurationDto
 from hangpy.entities.server import Server
 from hangpy.repositories.redis_server_repository import RedisServerRepository
 
@@ -18,7 +19,7 @@ class TestRedisServerRepository(unittest.TestCase):
     def test_add_and_get_servers(self):
         redis_client = fakeredis.FakeStrictRedis()
         server_repository = RedisServerRepository(redis_client)
-        fake_server = Server()
+        fake_server = Server(ServerConfigurationDto())
         server_repository.add_server(fake_server)
         actual_server = server_repository.get_servers()[0]
         expected_server = fake_server
@@ -31,7 +32,7 @@ class TestRedisServerRepository(unittest.TestCase):
     def test_update_server(self):
         redis_client = fakeredis.FakeStrictRedis()
         server_repository = RedisServerRepository(redis_client)
-        fake_server = Server()
+        fake_server = Server(ServerConfigurationDto())
         server_repository.add_server(fake_server)
         server = server_repository.get_servers()[0]
         server.last_cycle_datetime = datetime.datetime.now().isoformat()

@@ -12,19 +12,18 @@ from hangpy.services import JobActivityBase
 class ServerService(threading.Thread):
 
     def __init__(self,
-                 server: Server,
                  server_configuration: ServerConfigurationDto,
                  server_repository: AbstractServerRepository,
                  job_repository: AbstractJobRepository):
         self.stop_signal = False
-        self.server = server
-        self.server_configuration = server_configuration
+        self.server = Server(server_configuration)
         self.server_repository = server_repository
         self.job_repository = job_repository
         self.job_activities_assigned = []
         threading.Thread.__init__(self)
 
     def run(self):
+        self.set_server_start_state()
         while (self.run_enabled()):
             self.try_run_cycle()
             self.sleep_cycle()
@@ -32,7 +31,7 @@ class ServerService(threading.Thread):
         self.set_server_stop_state()
 
     def sleep_cycle(self):
-        time.sleep(self.server_configuration.cycle_interval_milliseconds / 1000)
+        time.sleep(self.server.configuration.cycle_interval_milliseconds / 1000)
 
     def run_enabled(self) -> bool:
         return not self.stop_signal
@@ -73,7 +72,7 @@ class ServerService(threading.Thread):
             time.sleep(0.1)
 
     def slots_limit_reached(self) -> bool:
-        return len(self.job_activities_assigned) >= self.server.slots
+        return len(self.job_activities_assigned) >= self.server.configuration.slots
 
     def slots_empty(self) -> bool:
         return len(self.job_activities_assigned) == 0
@@ -121,6 +120,10 @@ class ServerService(threading.Thread):
         job_activity_instance = job_class()
         job_activity_instance.set_job(job)
         return job_activity_instance
+
+    def set_server_start_state(self):
+        self.server.start_datetime = datetime.datetime.now().isoformat()
+        self.server_repository.add_server(self.server)
 
     def set_server_cycle_state(self):
         self.server.last_cycle_datetime = datetime.datetime.now().isoformat()

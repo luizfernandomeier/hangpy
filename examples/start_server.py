@@ -1,25 +1,20 @@
 import hangpy
 import redis
-import sys
 
-slots = int(sys.argv[1])
-
-server_configuration = hangpy.ServerConfigurationDto()
-server = hangpy.Server(slots)
-
-print('\nThe HangPy server is running!')
-print(f'Server id: {server.id}')
-print(f'Started: {server.start_datetime}')
-print(f'Interval: {server_configuration.cycle_interval_milliseconds} ms')
+server_configuration = hangpy.ServerConfigurationDto(cycle_interval_milliseconds=10000, slots=10)
 
 redis_client = redis.StrictRedis(host='172.17.0.1', port=6379, password=None)
 
 job_repository = hangpy.RedisJobRepository(redis_client)
 server_repository = hangpy.RedisServerRepository(redis_client)
 
-server_repository.add_server(server)
+server_service = hangpy.ServerService(server_configuration, server_repository, job_repository)
 
-server_service = hangpy.ServerService(server, server_configuration, server_repository, job_repository)
+print('\nThe HangPy server is running!')
+print(f'Server id: {server_service.server.id}')
+print(f'Started: {server_service.server.start_datetime}')
+print(f'Interval: {server_configuration.cycle_interval_milliseconds} ms')
+print(f'Slots: {server_configuration.slots}')
 
 exit_message = "To exit the server, type 'exit'."
 print(f'\n{exit_message}')
@@ -37,4 +32,4 @@ server_service.stop_signal = True
 
 server_service.join()
 
-print(f'Server {server.id} stopped.\n')
+print(f'Server {server_service.server.id} stopped.\n')
