@@ -2,14 +2,20 @@ import datetime
 import importlib
 import threading
 import time
-from hangpy.entities import Job
+from hangpy.dtos import ServerConfigurationDto
+from hangpy.entities import Job, Server
 from hangpy.enums import JobStatus
+from hangpy.repositories import AbstractJobRepository, AbstractServerRepository
 from hangpy.services import JobActivityBase
 
 
 class ServerService(threading.Thread):
 
-    def __init__(self, server, server_configuration, server_repository, job_repository):
+    def __init__(self,
+                 server: Server,
+                 server_configuration: ServerConfigurationDto,
+                 server_repository: AbstractServerRepository,
+                 job_repository: AbstractJobRepository):
         self.stop_signal = False
         self.server = server
         self.server_configuration = server_configuration
@@ -28,7 +34,7 @@ class ServerService(threading.Thread):
     def sleep_cycle(self):
         time.sleep(self.server_configuration.cycle_interval_milliseconds / 1000)
 
-    def run_enabled(self):
+    def run_enabled(self) -> bool:
         return not self.stop_signal
 
     def try_run_cycle(self):
@@ -66,10 +72,10 @@ class ServerService(threading.Thread):
             self.clear_finished_jobs()
             time.sleep(0.1)
 
-    def slots_limit_reached(self):
+    def slots_limit_reached(self) -> bool:
         return len(self.job_activities_assigned) >= self.server.slots
 
-    def slots_empty(self):
+    def slots_empty(self) -> bool:
         return len(self.job_activities_assigned) == 0
 
     def clear_finished_jobs(self):
@@ -87,10 +93,10 @@ class ServerService(threading.Thread):
         self.job_activities_assigned = [job_activity for job_activity in self.job_activities_assigned
                                         if not job_activity.can_be_untracked()]
 
-    def exists_enqueued_jobs(self):
+    def exists_enqueued_jobs(self) -> bool:
         return self.job_repository.exists_jobs_with_status(JobStatus.ENQUEUED)
 
-    def get_next_enqueued_job(self):
+    def get_next_enqueued_job(self) -> Job:
         return self.job_repository.get_job_by_status(JobStatus.ENQUEUED)
 
     def run_job(self, job: Job):
@@ -109,7 +115,7 @@ class ServerService(threading.Thread):
     def add_job_activity_assigned(self, job_activity_instance: JobActivityBase):
         self.job_activities_assigned.append(job_activity_instance)
 
-    def get_job_activity_instance(self, job: Job):
+    def get_job_activity_instance(self, job: Job) -> JobActivityBase:
         job_module = importlib.import_module(job.module_name)
         job_class = getattr(job_module, job.class_name)
         job_activity_instance = job_class()
@@ -129,9 +135,9 @@ class ServerService(threading.Thread):
         job.status = JobStatus.PROCESSING
         self.job_repository.update_job(job)
 
-    def try_set_lock_on_job(self, job: Job):
+    def try_set_lock_on_job(self, job: Job) -> bool:
         return self.job_repository.try_set_lock_on_job(job)
 
     # TODO: Implement custom logger
-    def log(self, message):
+    def log(self, message: str):
         print(message)

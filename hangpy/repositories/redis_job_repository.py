@@ -7,15 +7,15 @@ from hangpy.services import JobActivityBase
 
 class RedisJobRepository(AbstractJobRepository, RedisRepositoryBase):
 
-    def __init__(self, redis_client):
+    def __init__(self, redis_client: object):
         RedisRepositoryBase.__init__(self, redis_client)
 
-    def get_jobs(self):
+    def get_jobs(self) -> list[Job]:
         keys = self._get_keys('job:*')
         serialized_jobs = self.redis_client.mget(keys)
         return self._deserialize_entries(serialized_jobs)
 
-    def get_job_by_status(self, status: JobStatus):
+    def get_job_by_status(self, status: JobStatus) -> Job:
         status_job_key = self._get_key(f'jobstatus:*:{str(status)}')
         if (status_job_key is None):
             return None
@@ -25,10 +25,10 @@ class RedisJobRepository(AbstractJobRepository, RedisRepositoryBase):
         serialized_job = self.redis_client.get(job_key)
         return self._deserialize_entry(serialized_job)
 
-    def __get_job_keys_by_status(self, status: JobStatus) -> list:
+    def __get_job_keys_by_status(self, status: JobStatus) -> list[str]:
         return self._get_keys(f'jobstatus:*:{str(status)}')
 
-    def get_jobs_by_status(self, status: JobStatus):
+    def get_jobs_by_status(self, status: JobStatus) -> list[Job]:
         status_job_keys = self.__get_job_keys_by_status(status)
         job_keys = self.redis_client.mget(status_job_keys)
         serialized_jobs = self.redis_client.mget(job_keys)
@@ -39,7 +39,7 @@ class RedisJobRepository(AbstractJobRepository, RedisRepositoryBase):
         return len(status_job_keys) > 0
 
     def add_job(self, job_activity: JobActivityBase):
-        job = job_activity.get_job_object()
+        job = job_activity.create_job_object()
         self.__set_job(job)
 
     def update_job(self, job: Job):
@@ -49,8 +49,8 @@ class RedisJobRepository(AbstractJobRepository, RedisRepositoryBase):
         for job in jobs:
             self.update_job(job)
 
-    def try_set_lock_on_job(self, job: Job):
-        return self.redis_client.setnx(f'lock:job:{job.id}', 1)
+    def try_set_lock_on_job(self, job: Job) -> bool:
+        return bool(self.redis_client.setnx(f'lock:job:{job.id}', 1))
 
     def __set_job(self, job: Job):
         serialized_job = self._serialize_entry(job)

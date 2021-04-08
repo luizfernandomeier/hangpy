@@ -6,7 +6,7 @@ from hangpy.tests.fake import FakeJobActivity
 from unittest import TestCase, mock, main
 
 
-def get_fully_qualified(method_mocked: str) -> str:
+def get_fully_qualified_name(method_mocked: str) -> str:
     return f'hangpy.services.job_activity_base.JobActivityBase.{method_mocked}'
 
 
@@ -26,10 +26,10 @@ class TestJobActivityBase(TestCase):
                 return JobActivityBase.action(self)
         self.assertIsNone(FakeAbstractJob().action())
 
-    @mock.patch(get_fully_qualified('set_job_status'))
-    @mock.patch(get_fully_qualified('set_job_error'))
-    @mock.patch(get_fully_qualified('set_job_end_datetime'))
-    @mock.patch(get_fully_qualified('set_started_to_run'))
+    @mock.patch(get_fully_qualified_name('set_job_status'))
+    @mock.patch(get_fully_qualified_name('set_job_error'))
+    @mock.patch(get_fully_qualified_name('set_job_end_datetime'))
+    @mock.patch(get_fully_qualified_name('set_started_to_run'))
     def test_start(self, *args):
         job_activity = FakeJobActivity()
         job_activity.action = mock.MagicMock()
@@ -42,10 +42,10 @@ class TestJobActivityBase(TestCase):
         self.assertEqual(get_call_count('set_job_end_datetime', args), 1)
         self.assertEqual(get_call_count('set_started_to_run', args), 1)
 
-    @mock.patch(get_fully_qualified('set_job_status'))
-    @mock.patch(get_fully_qualified('set_job_error'))
-    @mock.patch(get_fully_qualified('set_job_end_datetime'))
-    @mock.patch(get_fully_qualified('set_started_to_run'))
+    @mock.patch(get_fully_qualified_name('set_job_status'))
+    @mock.patch(get_fully_qualified_name('set_job_error'))
+    @mock.patch(get_fully_qualified_name('set_job_end_datetime'))
+    @mock.patch(get_fully_qualified_name('set_started_to_run'))
     def test_start_exception(self, *args):
         job_activity = FakeJobActivity()
         job_activity.action = mock.MagicMock(side_effect=Exception())
@@ -56,9 +56,9 @@ class TestJobActivityBase(TestCase):
         self.assertEqual(get_call_count('set_job_end_datetime', args), 1)
         self.assertEqual(get_call_count('set_started_to_run', args), 1)
 
-    def test_get_job_object(self):
+    def test_create_job_object(self):
         job_activity = FakeJobActivity()
-        job = job_activity.get_job_object()
+        job = job_activity.create_job_object()
         self.assertTrue(job.module_name.endswith('fake'))
         self.assertEqual(job.class_name, 'FakeJobActivity')
 
@@ -99,7 +99,7 @@ class TestJobActivityBase(TestCase):
         job_activity._can_be_untracked = True
         self.assertTrue(job_activity.can_be_untracked())
 
-    @mock.patch(get_fully_qualified('is_alive'), return_value=True)
+    @mock.patch(get_fully_qualified_name('is_alive'), return_value=True)
     def test_is_finished_thread_running(self, is_alive_mock):
         job_activity = FakeJobActivity()
         self.assertFalse(job_activity.is_finished())

@@ -24,7 +24,7 @@ class TestRedisJobRepository(unittest.TestCase):
         fake_job = fake.FakeJobActivity()
         job_repository.add_job(fake_job)
         actual_job = job_repository.get_jobs()[0]
-        expected_job = fake_job.get_job_object()
+        expected_job = fake_job.create_job_object()
 
         self.assertEqual(actual_job.module_name, expected_job.module_name)
         self.assertEqual(actual_job.class_name, expected_job.class_name)
@@ -37,7 +37,7 @@ class TestRedisJobRepository(unittest.TestCase):
         job_repository.add_job(fake_job)
 
         actual_job = job_repository.get_job_by_status(JobStatus.ENQUEUED)
-        expected_job = fake_job.get_job_object()
+        expected_job = fake_job.create_job_object()
         self.assertEqual(actual_job.module_name, expected_job.module_name)
         self.assertEqual(actual_job.class_name, expected_job.class_name)
         self.assertListEqual(actual_job.parameters, expected_job.parameters)
@@ -50,7 +50,7 @@ class TestRedisJobRepository(unittest.TestCase):
         self.assertIsNone(actual_job)
 
         actual_job = job_repository.get_job_by_status(JobStatus.PROCESSING)
-        expected_job = fake_job.get_job_object()
+        expected_job = fake_job.create_job_object()
         self.assertEqual(actual_job.module_name, expected_job.module_name)
         self.assertEqual(actual_job.class_name, expected_job.class_name)
         self.assertListEqual(actual_job.parameters, expected_job.parameters)
@@ -72,7 +72,7 @@ class TestRedisJobRepository(unittest.TestCase):
         job_repository.add_job(fake_job)
 
         actual_job = job_repository.get_jobs_by_status(JobStatus.ENQUEUED)[0]
-        expected_job = fake_job.get_job_object()
+        expected_job = fake_job.create_job_object()
         self.assertEqual(actual_job.module_name, expected_job.module_name)
         self.assertEqual(actual_job.class_name, expected_job.class_name)
         self.assertListEqual(actual_job.parameters, expected_job.parameters)
@@ -86,7 +86,7 @@ class TestRedisJobRepository(unittest.TestCase):
         self.assertListEqual(actual_jobs, expected_jobs)
 
         actual_job = job_repository.get_jobs_by_status(JobStatus.PROCESSING)[0]
-        expected_job = fake_job.get_job_object()
+        expected_job = fake_job.create_job_object()
         self.assertEqual(actual_job.module_name, expected_job.module_name)
         self.assertEqual(actual_job.class_name, expected_job.class_name)
         self.assertListEqual(actual_job.parameters, expected_job.parameters)
