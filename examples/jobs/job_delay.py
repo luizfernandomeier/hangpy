@@ -2,6 +2,7 @@ from hangpy.services.job_activity_base import JobActivityBase
 import datetime
 import time
 
+
 class JobDelay(JobActivityBase):
 
     def action(self):
