@@ -20,7 +20,7 @@ class ServerConfigurationDto():
 
     def __validate_cycle_interval_milliseconds(self, cycle_interval_milliseconds: int):
         """
-        Internal function used to validate the cycle_interval_milliseconds value.
+        Internal function used to validate the 'cycle_interval_milliseconds' value.
 
         Raises:
             ValueError: The value must be an integer
@@ -34,7 +34,7 @@ class ServerConfigurationDto():
 
     def __validate_slots(self, slots: int):
         """
-        Internal function used to validate the slots value.
+        Internal function used to validate the 'slots' value.
 
         Raises:
             ValueError: The value must be an integer

@@ -3,11 +3,17 @@ from hangpy.enums import JobStatus
 from hangpy.repositories import RedisRepositoryBase
 from hangpy.repositories import AbstractJobRepository
 from hangpy.services import JobActivityBase
+from redis import Redis
 
 
 class RedisJobRepository(AbstractJobRepository, RedisRepositoryBase):
+    """Implementation of the AbstractJobRepository using Redis."""
 
-    def __init__(self, redis_client: object):
+    def __init__(self, redis_client: Redis):
+        """
+        Args:
+            redis_client (Redis): Implementation of a Redis client.
+        """
         RedisRepositoryBase.__init__(self, redis_client)
 
     def get_jobs(self) -> list[Job]:
@@ -26,6 +32,15 @@ class RedisJobRepository(AbstractJobRepository, RedisRepositoryBase):
         return self._deserialize_entry(serialized_job)
 
     def __get_job_keys_by_status(self, status: JobStatus) -> list[str]:
+        """Internal function for returning the Redis keys for jobs filtered by
+        status.
+
+        Args:
+            status (JobStatus)
+
+        Returns:
+            list[str]
+        """
         return self._get_keys(f'jobstatus:*:{str(status)}')
 
     def get_jobs_by_status(self, status: JobStatus) -> list[Job]:
@@ -53,15 +68,37 @@ class RedisJobRepository(AbstractJobRepository, RedisRepositoryBase):
         return bool(self.redis_client.setnx(f'lock:job:{job.id}', 1))
 
     def __set_job(self, job: Job):
+        """Internal function to unify the command 'set' used for both add and
+        update instructions on Redis. It also mantains a secondary index for
+        jobs on the database to make possible to apply a filter by job status.
+
+        Args:
+            job (Job)
+        """
+
         serialized_job = self._serialize_entry(job)
         self.__delete_job_status(job)
         self.redis_client.set(f'job:{job.id}', serialized_job)
         self.__set_job_status(job)
 
     def __delete_job_status(self, job: Job):
+        """Internal function to delete the secondary index by status kept on
+        Redis.
+
+        Args:
+            job (Job)
+        """
+
         keys = self._get_keys(f'jobstatus:{job.id}:*')
         for key in keys:
             self.redis_client.delete(key)
 
     def __set_job_status(self, job: Job):
+        """Internal function to set the secondary index by status kept on
+        Redis.
+
+        Args:
+            job (Job)
+        """
+
         self.redis_client.set(f'jobstatus:{job.id}:{str(job.status)}', f'job:{job.id}')
