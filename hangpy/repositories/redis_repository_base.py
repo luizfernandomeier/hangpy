@@ -3,10 +3,10 @@ import jsonpickle
 
 class RedisRepositoryBase():
 
-    def __init__(self, redis_client):
+    def __init__(self, redis_client: object):
         self.redis_client = redis_client
 
-    def _get_key(self, match):
+    def _get_key(self, match: str) -> str:
         keys = []
         cursor, result_keys = self.redis_client.scan(cursor=0, match=match)
         keys.extend(result_keys)
@@ -17,7 +17,7 @@ class RedisRepositoryBase():
             return None
         return keys[0]
 
-    def _get_keys(self, match):
+    def _get_keys(self, match: str) -> list[str]:
         keys = []
         cursor, result_keys = self.redis_client.scan(cursor=0, match=match)
         keys.extend(result_keys)
@@ -26,11 +26,11 @@ class RedisRepositoryBase():
             keys.extend(result_keys)
         return keys
 
-    def _serialize_entry(self, entry):
+    def _serialize_entry(self, entry: object) -> str:
         return jsonpickle.encode(entry)
 
-    def _deserialize_entry(self, serialized_entry):
+    def _deserialize_entry(self, serialized_entry: str) -> object:
         return jsonpickle.decode(serialized_entry)
 
-    def _deserialize_entries(self, serialized_entries):
+    def _deserialize_entries(self, serialized_entries: list[str]) -> list[object]:
         return [self._deserialize_entry(serialized_entry) for serialized_entry in serialized_entries]

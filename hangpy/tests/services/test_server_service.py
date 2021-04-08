@@ -8,7 +8,7 @@ from hangpy.services import JobActivityBase, ServerService
 from unittest import TestCase, mock, main
 
 
-def get_fully_qualified(method_mocked: str) -> str:
+def get_fully_qualified_name(method_mocked: str) -> str:
     return f'hangpy.services.server_service.ServerService.{method_mocked}'
 
 
@@ -36,11 +36,11 @@ class FakeJobActivity(JobActivityBase):
 
 class TestServerService(TestCase):
 
-    @mock.patch(get_fully_qualified('run_enabled'), side_effect=[True, True, False])
-    @mock.patch(get_fully_qualified('try_run_cycle'))
-    @mock.patch(get_fully_qualified('sleep_cycle'))
-    @mock.patch(get_fully_qualified('wait_until_slots_are_empty'))
-    @mock.patch(get_fully_qualified('set_server_stop_state'))
+    @mock.patch(get_fully_qualified_name('run_enabled'), side_effect=[True, True, False])
+    @mock.patch(get_fully_qualified_name('try_run_cycle'))
+    @mock.patch(get_fully_qualified_name('sleep_cycle'))
+    @mock.patch(get_fully_qualified_name('wait_until_slots_are_empty'))
+    @mock.patch(get_fully_qualified_name('set_server_stop_state'))
     def test_run(self, *args):
         server_service = ServerService(None, None, None, None)
         server_service.run()
@@ -67,23 +67,23 @@ class TestServerService(TestCase):
         server_service.stop_signal = True
         self.assertFalse(server_service.run_enabled())
 
-    @mock.patch(get_fully_qualified('run_cycle'))
+    @mock.patch(get_fully_qualified_name('run_cycle'))
     def test_try_run_cycle(self, *args):
         server_service = ServerService(None, None, None, None)
         server_service.try_run_cycle()
         self.assertEqual(get_call_count('run_cycle', args), 1)
 
-    @mock.patch(get_fully_qualified('run_cycle'), side_effect=Exception('run_cycle exception'))
-    @mock.patch(get_fully_qualified('log'))
+    @mock.patch(get_fully_qualified_name('run_cycle'), side_effect=Exception('run_cycle exception'))
+    @mock.patch(get_fully_qualified_name('log'))
     def test_try_run_cycle_exception(self, *args):
         server_service = ServerService(None, None, None, None)
         server_service.try_run_cycle()
         actual_log = str(get_mock('log', args).call_args[0][0])
         self.assertTrue(actual_log.endswith('run_cycle exception'))
 
-    @mock.patch(get_fully_qualified('set_server_cycle_state'))
-    @mock.patch(get_fully_qualified('must_run_cycle_loop'), side_effect=[True, False])
-    @mock.patch(get_fully_qualified('run_cycle_loop'))
+    @mock.patch(get_fully_qualified_name('set_server_cycle_state'))
+    @mock.patch(get_fully_qualified_name('must_run_cycle_loop'), side_effect=[True, False])
+    @mock.patch(get_fully_qualified_name('run_cycle_loop'))
     def test_run_cycle(self, *args):
         server_service = ServerService(None, None, None, None)
         server_service.run_cycle()
@@ -91,11 +91,11 @@ class TestServerService(TestCase):
         self.assertEqual(get_call_count('must_run_cycle_loop', args), 2)
         self.assertEqual(get_call_count('run_cycle_loop', args), 1)
 
-    @mock.patch(get_fully_qualified('clear_finished_jobs'))
-    @mock.patch(get_fully_qualified('wait_until_slot_is_open'))
-    @mock.patch(get_fully_qualified('get_next_enqueued_job'), return_value=get_fake_job())
-    @mock.patch(get_fully_qualified('try_set_lock_on_job'), return_value=True)
-    @mock.patch(get_fully_qualified('run_job'))
+    @mock.patch(get_fully_qualified_name('clear_finished_jobs'))
+    @mock.patch(get_fully_qualified_name('wait_until_slot_is_open'))
+    @mock.patch(get_fully_qualified_name('get_next_enqueued_job'), return_value=get_fake_job())
+    @mock.patch(get_fully_qualified_name('try_set_lock_on_job'), return_value=True)
+    @mock.patch(get_fully_qualified_name('run_job'))
     def test_run_cycle_loop(self, *args):
         server_service = ServerService(None, None, None, None)
         server_service.run_cycle_loop()
@@ -105,11 +105,11 @@ class TestServerService(TestCase):
         self.assertEqual(get_call_count('try_set_lock_on_job', args), 1)
         self.assertEqual(get_call_count('run_job', args), 1)
 
-    @mock.patch(get_fully_qualified('clear_finished_jobs'))
-    @mock.patch(get_fully_qualified('wait_until_slot_is_open'))
-    @mock.patch(get_fully_qualified('get_next_enqueued_job'), return_value=None)
-    @mock.patch(get_fully_qualified('try_set_lock_on_job'), return_value=True)
-    @mock.patch(get_fully_qualified('run_job'))
+    @mock.patch(get_fully_qualified_name('clear_finished_jobs'))
+    @mock.patch(get_fully_qualified_name('wait_until_slot_is_open'))
+    @mock.patch(get_fully_qualified_name('get_next_enqueued_job'), return_value=None)
+    @mock.patch(get_fully_qualified_name('try_set_lock_on_job'), return_value=True)
+    @mock.patch(get_fully_qualified_name('run_job'))
     def test_run_cycle_loop_with_no_jobs_enqueued(self, *args):
         server_service = ServerService(None, None, None, None)
         server_service.run_cycle_loop()
@@ -119,11 +119,11 @@ class TestServerService(TestCase):
         self.assertEqual(get_call_count('try_set_lock_on_job', args), 0)
         self.assertEqual(get_call_count('run_job', args), 0)
 
-    @mock.patch(get_fully_qualified('clear_finished_jobs'))
-    @mock.patch(get_fully_qualified('wait_until_slot_is_open'))
-    @mock.patch(get_fully_qualified('get_next_enqueued_job'), return_value=get_fake_job())
-    @mock.patch(get_fully_qualified('try_set_lock_on_job'), return_value=False)
-    @mock.patch(get_fully_qualified('run_job'))
+    @mock.patch(get_fully_qualified_name('clear_finished_jobs'))
+    @mock.patch(get_fully_qualified_name('wait_until_slot_is_open'))
+    @mock.patch(get_fully_qualified_name('get_next_enqueued_job'), return_value=get_fake_job())
+    @mock.patch(get_fully_qualified_name('try_set_lock_on_job'), return_value=False)
+    @mock.patch(get_fully_qualified_name('run_job'))
     def test_run_cycle_loop_cannot_set_lock_on_job(self, *args):
         server_service = ServerService(None, None, None, None)
         server_service.run_cycle_loop()
@@ -133,9 +133,9 @@ class TestServerService(TestCase):
         self.assertEqual(get_call_count('try_set_lock_on_job', args), 1)
         self.assertEqual(get_call_count('run_job', args), 0)
 
-    @mock.patch(get_fully_qualified('exists_enqueued_jobs'), side_effect=[False, False, False, False, True, True, True, True])
-    @mock.patch(get_fully_qualified('slots_empty'), side_effect=[False, False, True, True, False, False, True, True])
-    @mock.patch(get_fully_qualified('run_enabled'), side_effect=[False, True, False, True, False, True, False, True])
+    @mock.patch(get_fully_qualified_name('exists_enqueued_jobs'), side_effect=[False, False, False, False, True, True, True, True])
+    @mock.patch(get_fully_qualified_name('slots_empty'), side_effect=[False, False, True, True, False, False, True, True])
+    @mock.patch(get_fully_qualified_name('run_enabled'), side_effect=[False, True, False, True, False, True, False, True])
     def test_must_run_cycle_loop(self, *args):
         server_service = ServerService(None, None, None, None)
         self.assertFalse(server_service.must_run_cycle_loop())
@@ -147,16 +147,16 @@ class TestServerService(TestCase):
         self.assertFalse(server_service.must_run_cycle_loop())
         self.assertTrue(server_service.must_run_cycle_loop())
 
-    @mock.patch(get_fully_qualified('slots_limit_reached'), side_effect=[True, False])
-    @mock.patch(get_fully_qualified('clear_finished_jobs'))
+    @mock.patch(get_fully_qualified_name('slots_limit_reached'), side_effect=[True, False])
+    @mock.patch(get_fully_qualified_name('clear_finished_jobs'))
     def test_wait_until_slot_is_open(self, *args):
         server_service = ServerService(None, None, None, None)
         server_service.wait_until_slot_is_open()
         self.assertEqual(get_call_count('slots_limit_reached', args), 2)
         self.assertEqual(get_call_count('clear_finished_jobs', args), 1)
 
-    @mock.patch(get_fully_qualified('slots_empty'), side_effect=[False, True])
-    @mock.patch(get_fully_qualified('clear_finished_jobs'))
+    @mock.patch(get_fully_qualified_name('slots_empty'), side_effect=[False, True])
+    @mock.patch(get_fully_qualified_name('clear_finished_jobs'))
     def test_wait_until_slots_are_empty(self, *args):
         server_service = ServerService(None, None, None, None)
         server_service.wait_until_slots_are_empty()
@@ -185,8 +185,8 @@ class TestServerService(TestCase):
         server_service.job_activities_assigned.clear()
         self.assertTrue(server_service.slots_empty())
 
-    @mock.patch(get_fully_qualified('save_finished_jobs'))
-    @mock.patch(get_fully_qualified('untrack_jobs'))
+    @mock.patch(get_fully_qualified_name('save_finished_jobs'))
+    @mock.patch(get_fully_qualified_name('untrack_jobs'))
     def test_clear_finished_jobs(self, *args):
         server_service = ServerService(None, None, None, None)
         server_service.clear_finished_jobs()
@@ -254,11 +254,11 @@ class TestServerService(TestCase):
         self.assertIsNotNone(enqueued_job)
         self.assertIsInstance(enqueued_job, Job)
 
-    @mock.patch(get_fully_qualified('set_job_start_state'))
-    @mock.patch(get_fully_qualified('log'))
-    @mock.patch(get_fully_qualified('get_job_activity_instance'))
-    @mock.patch(get_fully_qualified('add_job_activity_assigned'))
-    @mock.patch(get_fully_qualified('run_job_instance'))
+    @mock.patch(get_fully_qualified_name('set_job_start_state'))
+    @mock.patch(get_fully_qualified_name('log'))
+    @mock.patch(get_fully_qualified_name('get_job_activity_instance'))
+    @mock.patch(get_fully_qualified_name('add_job_activity_assigned'))
+    @mock.patch(get_fully_qualified_name('run_job_instance'))
     def test_run_job(self, *args):
         server_service = ServerService(None, None, None, None)
         job = get_fake_job()
@@ -268,11 +268,11 @@ class TestServerService(TestCase):
         self.assertEqual(get_call_count('add_job_activity_assigned', args), 1)
         self.assertEqual(get_call_count('run_job_instance', args), 1)
 
-    @mock.patch(get_fully_qualified('set_job_start_state'))
-    @mock.patch(get_fully_qualified('log'))
-    @mock.patch(get_fully_qualified('get_job_activity_instance'))
-    @mock.patch(get_fully_qualified('add_job_activity_assigned'))
-    @mock.patch(get_fully_qualified('run_job_instance'), side_effect=Exception('run_job_instance exception'))
+    @mock.patch(get_fully_qualified_name('set_job_start_state'))
+    @mock.patch(get_fully_qualified_name('log'))
+    @mock.patch(get_fully_qualified_name('get_job_activity_instance'))
+    @mock.patch(get_fully_qualified_name('add_job_activity_assigned'))
+    @mock.patch(get_fully_qualified_name('run_job_instance'), side_effect=Exception('run_job_instance exception'))
     def test_run_job_exception(self, *args):
         server_service = ServerService(None, None, None, None)
         job = get_fake_job()

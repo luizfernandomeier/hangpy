@@ -2,7 +2,7 @@ class ServerConfigurationDto():
     """Class used to group the server configuration
     """
 
-    def __init__(self, cycle_interval_milliseconds=10000):
+    def __init__(self, cycle_interval_milliseconds: int = 10000):
         """
         Args:
             cycle_interval_milliseconds (int, optional): Milliseconds to sleep bewteen the server cycles.
@@ -19,7 +19,7 @@ class ServerConfigurationDto():
         """
         self.__validate_cycle_interval_milliseconds(cycle_interval_milliseconds)
 
-    def __validate_cycle_interval_milliseconds(self, cycle_interval_milliseconds):
+    def __validate_cycle_interval_milliseconds(self, cycle_interval_milliseconds: int):
         """Internal method used to validate the cycle_interval_milliseconds value.
 
         Args:

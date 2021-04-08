@@ -20,19 +20,19 @@ class JobActivityBase(ABC, threading.Thread):
     def set_job(self, job: Job):
         self._job = job
 
-    def get_job(self):
+    def get_job(self) -> Job:
         return self._job
 
     def set_started_to_run(self):
         self._started_to_run = True
 
-    def is_finished(self):
+    def is_finished(self) -> bool:
         return self._started_to_run and not self.is_alive()
 
     def set_can_be_untracked(self):
         self._can_be_untracked = True
 
-    def can_be_untracked(self):
+    def can_be_untracked(self) -> bool:
         return self._can_be_untracked
 
     def set_job_status(self, status: JobStatus):
@@ -54,7 +54,7 @@ class JobActivityBase(ABC, threading.Thread):
             self.set_job_error(err)
         self.set_job_end_datetime()
 
-    def get_job_object(self):
+    def create_job_object(self) -> Job:
         module_name = self.__module__
         class_name = self.__class__.__name__
         job = Job(module_name, class_name)
