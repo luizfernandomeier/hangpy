@@ -16,19 +16,15 @@ print(f'Started: {server_service.server.start_datetime}')
 print(f'Interval: {server_configuration.cycle_interval_milliseconds} ms')
 print(f'Slots: {server_configuration.slots}')
 
-exit_message = "To exit the server, type 'exit'."
-print(f'\n{exit_message}')
-
 server_service.start()
 
-__exit = input()
-
+__exit = ''
 while(__exit.lower() != 'exit'):
-    __exit = input(f'\n{exit_message}')
+    __exit = input('\nTo exit the server, type \'exit\'.\n')
 
 print('Shutdown in progress. Please wait..')
 
-server_service.stop_signal = True
+server_service.stop()
 
 server_service.join()
 

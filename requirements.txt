@@ -1,0 +1,5 @@
+coverage>=5.5
+fakeredis>=1.5.0
+freezegun>=1.1.0
+jsonpickle>=2.0.0
+redis>=3.5.3

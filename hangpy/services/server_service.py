@@ -311,6 +311,13 @@ class ServerService(threading.Thread):
 
         return self.job_repository.try_set_lock_on_job(job)
 
+    def stop(self):
+        """
+        Send the stop signal to the server instance.
+        """
+
+        self.stop_signal = True
+
     # TODO: Inject logger.
     def log(self, message: str):
         """
