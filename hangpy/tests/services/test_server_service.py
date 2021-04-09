@@ -359,6 +359,12 @@ class TestServerService(TestCase):
         self.assertTrue(server_service.try_set_lock_on_job(job))
         self.assertFalse(server_service.try_set_lock_on_job(job))
 
+    def test_stop(self):
+        server_service = ServerService(None, None, None)
+        self.assertFalse(server_service.stop_signal)
+        server_service.stop()
+        self.assertTrue(server_service.stop_signal)
+
     @mock.patch('builtins.print')
     def test_log(self, *args):
         server_service = ServerService(None, None, None)

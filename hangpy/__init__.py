@@ -16,4 +16,5 @@ from hangpy.repositories import \
 
 from hangpy.services import \
     JobActivityBase, \
+    JobService, \
     ServerService # noqa F401
