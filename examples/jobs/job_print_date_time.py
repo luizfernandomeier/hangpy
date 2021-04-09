@@ -1,5 +1,5 @@
-from hangpy.services.job_activity_base import JobActivityBase
 import datetime
+from hangpy import JobActivityBase
 
 
 class JobPrintDateTime(JobActivityBase):
