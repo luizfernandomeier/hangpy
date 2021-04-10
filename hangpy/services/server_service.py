@@ -8,6 +8,7 @@ from hangpy.enums import JobStatus
 from hangpy.repositories import AbstractJobRepository, AbstractServerRepository
 from hangpy.services import JobActivityBase
 
+
 class ServerService(threading.Thread):
     """
     Manages the execution of job queue.
