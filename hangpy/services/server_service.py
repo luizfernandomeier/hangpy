@@ -328,5 +328,9 @@ class ServerService(threading.Thread):
             message (str)
         """
 
-        #print(message)
+        a = 1
+        b = 2
+        if (a==b):
+            print('oi')
+        # print(message)
         pass
