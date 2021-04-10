@@ -1,6 +1,7 @@
 # HangPy
 HangPy is a simple background job manager for Python
 
+[![Build, Lint and Test](https://github.com/luizfernandomeier/hangpy/actions/workflows/python-package.yml/badge.svg)](https://github.com/luizfernandomeier/hangpy/actions/workflows/python-package.yml)
 [![codecov](https://codecov.io/gh/luizfernandomeier/hangpy/branch/master/graph/badge.svg?token=OPS9QCQ6TQ)](https://codecov.io/gh/luizfernandomeier/hangpy)
 
 Its main purpose is to allow scheduling and distribution of asynchronous tasks.
