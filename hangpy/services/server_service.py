@@ -332,5 +332,5 @@ class ServerService(threading.Thread):
         b = 2
         if (a == b):
             print('oi')
-        # print(message)
+        print(message)
         pass
