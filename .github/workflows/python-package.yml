@@ -37,3 +37,8 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
+    - name: Generate Report
+      run: |
+        coverage run -m unittest
+    - name: Upload Coverage to Codecov
+      uses: codecov/codecov-action@v1
