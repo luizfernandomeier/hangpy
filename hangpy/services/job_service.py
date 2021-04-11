@@ -1,5 +1,5 @@
-from hangpy.entities import Job
 from hangpy.repositories import AbstractJobRepository
+from hangpy.services import JobActivityBase
 
 
 class JobService():
@@ -17,12 +17,13 @@ class JobService():
 
         self.job_repository = job_repository
 
-    def enqueue_job(self, job: Job):
+    def enqueue_job(self, job_activity: JobActivityBase):
         """
-        Add job do the queue using the provided repository.
+        Add job activity to the queue using the provided repository.
 
         Args:
-            job (Job)
+            job (JobActivityBase)
         """
 
+        job = job_activity.create_job_object()
         self.job_repository.add_job(job)
