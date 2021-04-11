@@ -22,7 +22,7 @@ class TestRedisJobRepository(unittest.TestCase):
         redis_client = fakeredis.FakeStrictRedis()
         job_repository = RedisJobRepository(redis_client)
         fake_job = fake.FakeJobActivity()
-        job_repository.add_job(fake_job)
+        job_repository.add_job(fake_job.create_job_object())
         actual_job = job_repository.get_jobs()[0]
         expected_job = fake_job.create_job_object()
 
@@ -34,7 +34,7 @@ class TestRedisJobRepository(unittest.TestCase):
         redis_client = fakeredis.FakeStrictRedis()
         job_repository = RedisJobRepository(redis_client)
         fake_job = fake.FakeJobActivity()
-        job_repository.add_job(fake_job)
+        job_repository.add_job(fake_job.create_job_object())
 
         actual_job = job_repository.get_job_by_status(JobStatus.ENQUEUED)
         expected_job = fake_job.create_job_object()
@@ -69,7 +69,7 @@ class TestRedisJobRepository(unittest.TestCase):
         redis_client = fakeredis.FakeStrictRedis()
         job_repository = RedisJobRepository(redis_client)
         fake_job = fake.FakeJobActivity()
-        job_repository.add_job(fake_job)
+        job_repository.add_job(fake_job.create_job_object())
 
         actual_job = job_repository.get_jobs_by_status(JobStatus.ENQUEUED)[0]
         expected_job = fake_job.create_job_object()
@@ -99,7 +99,7 @@ class TestRedisJobRepository(unittest.TestCase):
         redis_client = fakeredis.FakeStrictRedis()
         job_repository = RedisJobRepository(redis_client)
         fake_job = fake.FakeJobActivity()
-        job_repository.add_job(fake_job)
+        job_repository.add_job(fake_job.create_job_object())
         self.assertFalse(job_repository.exists_jobs_with_status(JobStatus.PROCESSING))
         self.assertTrue(job_repository.exists_jobs_with_status(JobStatus.ENQUEUED))
 
@@ -107,7 +107,7 @@ class TestRedisJobRepository(unittest.TestCase):
         redis_client = fakeredis.FakeStrictRedis()
         job_repository = RedisJobRepository(redis_client)
         fake_job = fake.FakeJobActivity()
-        job_repository.add_job(fake_job)
+        job_repository.add_job(fake_job.create_job_object())
         job = job_repository.get_jobs()[0]
         job.parameters.append('luiz')
         job.status = JobStatus.ERROR
@@ -121,8 +121,8 @@ class TestRedisJobRepository(unittest.TestCase):
         job_repository = RedisJobRepository(redis_client)
         fake_job1 = fake.FakeJobActivity()
         fake_job2 = fake.FakeJobActivity()
-        job_repository.add_job(fake_job1)
-        job_repository.add_job(fake_job2)
+        job_repository.add_job(fake_job1.create_job_object())
+        job_repository.add_job(fake_job2.create_job_object())
         jobs = job_repository.get_jobs()
         jobs[0].parameters.append('luiz')
         jobs[1].parameters.append('fernando')
@@ -140,8 +140,8 @@ class TestRedisJobRepository(unittest.TestCase):
         job_repository = RedisJobRepository(redis_client)
         fake_job1 = fake.FakeJobActivity()
         fake_job2 = fake.FakeJobActivity()
-        job_repository.add_job(fake_job1)
-        job_repository.add_job(fake_job2)
+        job_repository.add_job(fake_job1.create_job_object())
+        job_repository.add_job(fake_job2.create_job_object())
         jobs = job_repository.get_jobs()
 
         actual_lock_set = job_repository.try_set_lock_on_job(jobs[0])

@@ -2,7 +2,6 @@ from hangpy.entities import Job
 from hangpy.enums import JobStatus
 from hangpy.repositories import RedisRepositoryBase
 from hangpy.repositories import AbstractJobRepository
-from hangpy.services import JobActivityBase
 from redis import Redis
 
 
@@ -53,8 +52,7 @@ class RedisJobRepository(AbstractJobRepository, RedisRepositoryBase):
         status_job_keys = self.__get_job_keys_by_status(status)
         return len(status_job_keys) > 0
 
-    def add_job(self, job_activity: JobActivityBase):
-        job = job_activity.create_job_object()
+    def add_job(self, job: Job):
         self.__set_job(job)
 
     def update_job(self, job: Job):
