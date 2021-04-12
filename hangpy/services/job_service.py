@@ -17,13 +17,15 @@ class JobService():
 
         self.job_repository = job_repository
 
-    def enqueue_job(self, job_activity: JobActivityBase):
+    def enqueue_job(self, job_activity: JobActivityBase, parameters: list[str] = None):
         """
         Add job activity to the queue using the provided repository.
 
         Args:
             job (JobActivityBase)
+            parameters (list[str])
         """
 
-        job = job_activity.create_job_object()
+        job = job_activity.create_job_object(parameters)
+
         self.job_repository.add_job(job)
