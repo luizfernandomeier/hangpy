@@ -118,10 +118,13 @@ class JobActivityBase(ABC, threading.Thread):
             self.set_job_error(err)
         self.set_job_end_datetime()
 
-    def create_job_object(self) -> Job:
+    def create_job_object(self, parameters: list[str] = None) -> Job:
         """
         Returns an instance of the entity that represents the job on the
         repository, based on the activity that inherits from this base class.
+
+        Args:
+            parameters (list[str])
 
         Returns:
             Job
@@ -129,4 +132,8 @@ class JobActivityBase(ABC, threading.Thread):
         module_name = self.__module__
         class_name = self.__class__.__name__
         job = Job(module_name, class_name)
+
+        if (parameters is not None):
+            job.parameters.extend(parameters)
+
         return job

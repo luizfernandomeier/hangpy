@@ -17,6 +17,10 @@ class TestJobService(TestCase):
         self.assertEqual(fake_job_activity.create_job_object.call_count, 1)
         self.assertEqual(fake_job_repository.add_job.call_count, 1)
 
+        job_service.enqueue_job(fake_job_activity, ['a', 'b'])
+        actual_args = fake_job_activity.create_job_object.call_args[0][0]
+        self.assertListEqual(actual_args, ['a', 'b'])
+
 
 if (__name__ == "__main__"):
     main()

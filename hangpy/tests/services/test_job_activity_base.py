@@ -58,9 +58,12 @@ class TestJobActivityBase(TestCase):
 
     def test_create_job_object(self):
         job_activity = FakeJobActivity()
-        job = job_activity.create_job_object()
-        self.assertTrue(job.module_name.endswith('fake'))
-        self.assertEqual(job.class_name, 'FakeJobActivity')
+        actual_job = job_activity.create_job_object()
+        self.assertTrue(actual_job.module_name.endswith('fake'))
+        self.assertEqual(actual_job.class_name, 'FakeJobActivity')
+
+        actual_job = job_activity.create_job_object(['a', 'b'])
+        self.assertListEqual(actual_job.parameters, ['a', 'b'])
 
     def test_set_job(self):
         job_activity = FakeJobActivity()
