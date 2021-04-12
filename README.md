@@ -1,5 +1,5 @@
 # HangPy
-HangPy is a simple background job manager for Python
+HangPy is a simple background job manager for Python.
 
 [![Build, Lint and Test](https://github.com/luizfernandomeier/hangpy/actions/workflows/python-package.yml/badge.svg)](https://github.com/luizfernandomeier/hangpy/actions/workflows/python-package.yml)
 [![codecov](https://codecov.io/gh/luizfernandomeier/hangpy/branch/master/graph/badge.svg?token=OPS9QCQ6TQ)](https://codecov.io/gh/luizfernandomeier/hangpy)
@@ -55,7 +55,7 @@ When the HangPy server is signaled to stop, it will wait for the jobs that are r
 
 # Creating jobs
 
-In order to create a job that can be executed by HangPy, it is necessary to create a class that inherits from `JobActivityBase`
+In order to create a job that can be executed by HangPy, it is necessary to create a class that inherits from `JobActivityBase`.
 
 It is necessary to override the function `action`, placing the commands to be executed inside.
 
