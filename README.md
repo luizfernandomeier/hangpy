@@ -49,19 +49,19 @@ server_service.start()
 
 # Stopping the server
 
-It is possible to use the function 'stop' available on the 'ServerService' class.
+It is possible to use the function `stop` available on the `ServerService` class.
 
-When the HangPy server is signaled to stop, it will wait for the jobs that are running on that instance to end, without catching any new tasks from the queue.
+When the HangPy server is signaled to stop, it will wait for the jobs that are running on that instance to end, without fetching any new tasks from the queue.
 
 # Creating jobs
 
-In order to create a job that can be executed by HangPy, it is necessary to create a class that inherits from 'JobActivityBase'
+In order to create a job that can be executed by HangPy, it is necessary to create a class that inherits from `JobActivityBase`
 
-It is necessary to override the function 'action', placing the commands to be executed inside.
+It is necessary to override the function `action`, placing the commands to be executed inside.
 
 The code snippet below shows the scheduling of a simple job.
 
-Suppose that exists a module named 'job_delay', containing the following class:
+Suppose that exists a module named `job_delay`, containing the following class:
 
 ```python
 import hangpy
@@ -97,7 +97,7 @@ job_service.enqueue_job(JobPrintDateTime())
 
 # Examples
 
-In the 'examples' folder there are some scripts that show in a simple way how to use HangPy.
+In the `examples` folder there are some scripts that show in a simple way how to use HangPy.
 
 The examples include a simple implementation of a standalone HangPy server that runs on the console.
 
@@ -109,15 +109,15 @@ Each server instance can use a different configuration, choosing what best suits
 
 # Configuration
 
-Using the class 'ServerConfigurationDto' is possible to configure the details of each server instance.
+Using the class `ServerConfigurationDto` is possible to configure the details of each server instance.
 
-- slots: Set the maximum number of jobs that can be executed in parallel on each server instance.
-- cycle_interval_milliseconds: Sets the time the system sleeps between each processing cycle on the server instance. This sleep time only occurs when a cycle ends and there are no jobs enqueued.
+- `slots`: Set the maximum number of jobs that can be executed in parallel on each server instance.
+- `cycle_interval_milliseconds`: Sets the time the system sleeps between each processing cycle on the server instance. This sleep time only occurs when a cycle ends and there are no jobs enqueued.
 
 # Custom Repositories
 
 HangPy was built in a way to allow that any repository could be used to store its internal data.
 
-Although there is builtin support for using Redis, all calls are made through the abstract classes 'AbstractJobRepository' and 'AbstractServerRepository'.
+Although there is builtin support for using Redis, all calls are made through the abstract classes `AbstractJobRepository` and `AbstractServerRepository`.
 
-For example, if someone wants to use HangPy with its internal data stored in a relational database, it would be enough to implement the methods described on those both interfaces, passing these implementations as arguments to the class 'ServerService'.
+For example, if someone wants to use HangPy with its internal data stored in a relational database, it would be enough to implement the methods described on those both interfaces, passing these implementations as arguments to the class `ServerService`.
