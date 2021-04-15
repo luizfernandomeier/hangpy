@@ -1,4 +1,4 @@
-from hangpy.repositories import AbstractJobRepository
+from hangpy.repositories import JobRepository
 from hangpy.services import JobActivityBase
 
 
@@ -8,10 +8,10 @@ class JobService():
     """
 
     def __init__(self,
-                 job_repository: AbstractJobRepository):
+                 job_repository: JobRepository):
         """
         Args:
-            job_repository (AbstractJobRepository): Implementation of the job
+            job_repository (JobRepository): Implementation of the job
             repository.
         """
 

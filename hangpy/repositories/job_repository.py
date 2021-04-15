@@ -3,7 +3,7 @@ from hangpy.entities import Job
 from hangpy.enums import JobStatus
 
 
-class AbstractJobRepository(ABC):
+class JobRepository(ABC):
     """
     Interface defining the functions necessary for a class to be used as job
     repository.

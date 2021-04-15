@@ -9,8 +9,8 @@ from hangpy.enums import \
     JobStatus # noqa F401
 
 from hangpy.repositories import \
-    AbstractJobRepository, \
-    AbstractServerRepository, \
+    JobRepository, \
+    ServerRepository, \
     RedisJobRepository, \
     RedisServerRepository # noqa F401
 

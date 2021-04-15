@@ -1,8 +1,8 @@
 import unittest
-from hangpy.repositories import AbstractServerRepository
+from hangpy.repositories import ServerRepository
 
 
-class TestAbstractServerRepository(unittest.TestCase):
+class TestServerRepository(unittest.TestCase):
 
     def test_instantiate(self):
         server_repository = FakeServerRepository()
@@ -11,16 +11,16 @@ class TestAbstractServerRepository(unittest.TestCase):
         self.assertIsNone(server_repository.update_server(None))
 
 
-class FakeServerRepository(AbstractServerRepository):
+class FakeServerRepository(ServerRepository):
 
     def get_servers(self):
-        return AbstractServerRepository.get_servers(self)
+        return ServerRepository.get_servers(self)
 
     def add_server(self, server):
-        return AbstractServerRepository.add_server(self, server)
+        return ServerRepository.add_server(self, server)
 
     def update_server(self, server):
-        return AbstractServerRepository.update_server(self, server)
+        return ServerRepository.update_server(self, server)
 
 
 if (__name__ == "__main__"):

@@ -1,12 +1,12 @@
 from hangpy.entities import Job
 from hangpy.enums import JobStatus
 from hangpy.repositories import RedisRepositoryBase
-from hangpy.repositories import AbstractJobRepository
+from hangpy.repositories import JobRepository
 from redis import Redis
 
 
-class RedisJobRepository(AbstractJobRepository, RedisRepositoryBase):
-    """Implementation of the AbstractJobRepository using Redis."""
+class RedisJobRepository(JobRepository, RedisRepositoryBase):
+    """Implementation of the JobRepository using Redis."""
 
     def __init__(self, redis_client: Redis):
         """

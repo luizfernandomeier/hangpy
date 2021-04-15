@@ -1,11 +1,11 @@
 from hangpy.entities import Server
 from hangpy.repositories import RedisRepositoryBase
-from hangpy.repositories import AbstractServerRepository
+from hangpy.repositories import ServerRepository
 from redis import Redis
 
 
-class RedisServerRepository(AbstractServerRepository, RedisRepositoryBase):
-    """Implementation of the AbstractServerRepository using Redis."""
+class RedisServerRepository(ServerRepository, RedisRepositoryBase):
+    """Implementation of the ServerRepository using Redis."""
 
     def __init__(self, redis_client: Redis):
         """

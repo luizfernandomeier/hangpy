@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from hangpy.entities import Server
 
 
-class AbstractServerRepository(ABC):
+class ServerRepository(ABC):
     """
     Interface defining the functions necessary for a class to be used as
     server repository.

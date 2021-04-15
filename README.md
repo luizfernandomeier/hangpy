@@ -118,6 +118,6 @@ Using the class `ServerConfigurationDto` is possible to configure the details of
 
 HangPy was built in a way to allow that any repository could be used to store its internal data.
 
-Although there is builtin support for using Redis, all calls are made through the abstract classes `AbstractJobRepository` and `AbstractServerRepository`.
+Although there is builtin support for using Redis, all calls are made through the abstract classes `JobRepository` and `ServerRepository`.
 
 For example, if someone wants to use HangPy with its internal data stored in a relational database, it would be enough to implement the methods described on those both interfaces, passing these implementations as arguments to the class `ServerService`.
