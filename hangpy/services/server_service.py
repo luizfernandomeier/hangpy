@@ -5,27 +5,27 @@ import time
 from hangpy.dtos import ServerConfigurationDto
 from hangpy.entities import Job, Server
 from hangpy.enums import JobStatus
-from hangpy.repositories import AbstractJobRepository, AbstractServerRepository
+from hangpy.repositories import JobRepository, ServerRepository
 from hangpy.services import JobActivityBase
 
 
 class ServerService(threading.Thread):
     """
-    Manages the execution of job queue.
+    Manages the execution of the job queue.
     Use this class when implementing a HangPy server.
     """
 
     def __init__(self,
                  server_configuration: ServerConfigurationDto,
-                 server_repository: AbstractServerRepository,
-                 job_repository: AbstractJobRepository):
+                 server_repository: ServerRepository,
+                 job_repository: JobRepository):
         """
         Args:
             server_configuration (ServerConfigurationDto): Class contaning the
             configuration to be used by this server instance.
-            server_repository (AbstractServerRepository): Implementation of
+            server_repository (ServerRepository): Implementation of
             the server repository.
-            job_repository (AbstractJobRepository): Implementation of the job
+            job_repository (JobRepository): Implementation of the job
             repository.
         """
 
