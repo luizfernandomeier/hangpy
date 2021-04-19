@@ -6,7 +6,7 @@ from hangpy.dtos import ServerConfigurationDto
 from hangpy.entities import Job, Server
 from hangpy.enums import JobStatus
 from hangpy.repositories import JobRepository, ServerRepository
-from hangpy.services import JobActivityBase
+from hangpy.services import JobActivityBase, LogService
 
 
 class ServerService(threading.Thread):
@@ -18,7 +18,8 @@ class ServerService(threading.Thread):
     def __init__(self,
                  server_configuration: ServerConfigurationDto,
                  server_repository: ServerRepository,
-                 job_repository: JobRepository):
+                 job_repository: JobRepository,
+                 log_service: LogService = None):
         """
         Args:
             server_configuration (ServerConfigurationDto): Class contaning the
@@ -27,12 +28,14 @@ class ServerService(threading.Thread):
             the server repository.
             job_repository (JobRepository): Implementation of the job
             repository.
+            log_service (LogService): Logger.
         """
 
         self.stop_signal = False
         self.server = Server(server_configuration)
         self.server_repository = server_repository
         self.job_repository = job_repository
+        self.log_service = log_service
         self.job_activities_assigned = []
         threading.Thread.__init__(self)
 
@@ -44,11 +47,20 @@ class ServerService(threading.Thread):
         """
 
         self.set_server_start_state()
+        self.log_run()
         while (self.run_enabled()):
             self.try_run_cycle()
             self.sleep_cycle()
         self.wait_until_slots_are_empty()
         self.set_server_stop_state()
+
+    def log_run(self):
+        message = ('The HangPy server is running!'
+                   f'\nServer id: {self.server.id}'
+                   f'\nStarted: {self.server.start_datetime}'
+                   f'\nInterval: {self.server.configuration.cycle_interval_milliseconds} ms'
+                   f'\nSlots: {self.server.configuration.slots}')
+        self.log(message)
 
     def sleep_cycle(self):
         """
@@ -317,8 +329,20 @@ class ServerService(threading.Thread):
         """
 
         self.stop_signal = True
+        self.log_stop()
 
-    # TODO: Inject logger.
+    def log_stop(self):
+        message = f'Server {self.server.id} shutdown in progress..'
+        self.log(message)
+
+    def join(self):
+        threading.Thread.join(self)
+        self.log_join()
+
+    def log_join(self):
+        message = f'Server {self.server.id} stopped.'
+        self.log(message)
+
     def log(self, message: str):
         """
         Send the server log messages to the logger injected on this server
@@ -328,4 +352,5 @@ class ServerService(threading.Thread):
             message (str)
         """
 
-        print(message)
+        if (self.log_service is not None):
+            self.log_service.log(message)

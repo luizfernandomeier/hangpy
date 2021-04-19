@@ -37,6 +37,7 @@ class FakeJobActivity(JobActivityBase):
 class TestServerService(TestCase):
 
     @mock.patch(get_fully_qualified_name('set_server_start_state'))
+    @mock.patch(get_fully_qualified_name('log_run'))
     @mock.patch(get_fully_qualified_name('run_enabled'), side_effect=[True, True, False])
     @mock.patch(get_fully_qualified_name('try_run_cycle'))
     @mock.patch(get_fully_qualified_name('sleep_cycle'))
@@ -51,6 +52,12 @@ class TestServerService(TestCase):
         self.assertEqual(get_call_count('sleep_cycle', args), 2)
         self.assertEqual(get_call_count('wait_until_slots_are_empty', args), 1)
         self.assertEqual(get_call_count('set_server_stop_state', args), 1)
+
+    @mock.patch(get_fully_qualified_name('log'))
+    def test_log_run(self, *args):
+        server_service = ServerService(ServerConfigurationDto(), None, None)
+        server_service.log_run()
+        self.assertEqual(get_call_count('log', args), 1)
 
     def test_sleep_cycle(self):
         server_service = ServerService(ServerConfigurationDto(1000), None, None)
@@ -359,18 +366,45 @@ class TestServerService(TestCase):
         self.assertTrue(server_service.try_set_lock_on_job(job))
         self.assertFalse(server_service.try_set_lock_on_job(job))
 
-    def test_stop(self):
+    @mock.patch(get_fully_qualified_name('log_stop'))
+    def test_stop(self, *args):
         server_service = ServerService(None, None, None)
         self.assertFalse(server_service.stop_signal)
         server_service.stop()
         self.assertTrue(server_service.stop_signal)
 
-    @mock.patch('builtins.print')
-    def test_log(self, *args):
+    @mock.patch(get_fully_qualified_name('log'))
+    def test_log_stop(self, *args):
+        server_service = ServerService(None, None, None)
+        server_service.log_stop()
+        self.assertEqual(get_call_count('log', args), 1)
+
+    @mock.patch(get_fully_qualified_name('log_join'))
+    @mock.patch('threading.Thread.join')
+    def test_join(self, *args):
+        server_service = ServerService(None, None, None)
+        server_service.join()
+        self.assertEqual(get_call_count('join', args), 1)
+
+    @mock.patch(get_fully_qualified_name('log'))
+    def test_log_join(self, *args):
+        server_service = ServerService(None, None, None)
+        server_service.log_join()
+        self.assertEqual(get_call_count('log', args), 1)
+
+    def test_log_with_logger_injected(self):
+        fake_log_service = types.SimpleNamespace()
+        fake_log_service.log = mock.MagicMock()
+        server_service = ServerService(None, None, None, fake_log_service)
+        server_service.log('some log message')
+        self.assertEqual(fake_log_service.log.call_args[0][0], 'some log message')
+
+    def test_log_without_logger_injected(self):
+        fake_log_service = types.SimpleNamespace()
+        fake_log_service.log = mock.MagicMock()
         server_service = ServerService(None, None, None)
         server_service.log('some log message')
-        actual_print = str(get_mock('print', args).call_args[0][0])
-        self.assertEqual(actual_print, 'some log message')
+        self.assertEqual(fake_log_service.log.call_count, 0)
 
 
 if (__name__ == "__main__"):
