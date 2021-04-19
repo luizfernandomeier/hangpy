@@ -40,12 +40,19 @@ job_repository = hangpy.RedisJobRepository(redis_client)
 # Configuring the HangPy server instance
 server_configuration = hangpy.ServerConfigurationDto(slots=10)
 
+# Defining the log output
+log_service = hangpy.PrintLogService()
+
 # Instantiating the server
-server_service = hangpy.ServerService(server_configuration, server_repository, job_repository)
+server_service = hangpy.ServerService(server_configuration, server_repository, job_repository, log_service)
 
 # Initializing the server
 server_service.start()
 ```
+
+# Log
+
+There is a builtin log class called `PrintLogService` that can be injected in the `ServerService` constructor. This logger will print the messages on the console. It is possible to build custom loggers inheriting from the abstract class `LogService`.
 
 # Stopping the server
 
