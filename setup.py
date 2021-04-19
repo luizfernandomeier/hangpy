@@ -7,7 +7,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='hangpy',
-    version='0.1.7',
+    version='0.1.8',
     description="HangPy is a simple background job manager for Python",
     long_description=long_description,
     long_description_content_type='text/markdown',
